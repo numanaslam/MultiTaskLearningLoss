@@ -1,0 +1,87 @@
+graph TB
+    %% Data Input Layer
+    subgraph "Data Input"
+        A1[ROI Images] --> A2[Image Datastore]
+        B1[Lung Masks] --> B2[Mask Datastore]
+        A2 --> C1[K-Fold Split]
+        B2 --> C1
+    end
+
+    %% Preprocessing Layer
+    subgraph "Preprocessing & Caching"
+        C1 --> D1[Stratified K-Fold]
+        D1 --> D2[Train/Val Split]
+        D2 --> D3[Data Augmentation]
+        D3 --> D4[GradCAM Pre-computation]
+        D4 --> D5[Enhanced Mask Processing]
+    end
+
+    %% Network Architecture
+    subgraph "Network Architecture"
+        E1[VGG16 Backbone] --> E2[Feature Extraction]
+        E2 --> E3[Custom Classification Head]
+        E3 --> E4[Multi-Task Output]
+    end
+
+    %% Training Process
+    subgraph "Multi-Task Training Loop"
+        F1[Batch Input] --> F2[Forward Pass]
+        F2 --> F3[Classification Output]
+        F2 --> F4[Feature Maps]
+        
+        F4 --> F5[Student GradCAM]
+        F5 --> F6[GradCAM Loss]
+        
+        F5 --> F7[Adaptive Thresholding]
+        F7 --> F8[Binary Prediction Mask]
+        F8 --> F9[Segmentation Loss]
+        
+        F3 --> F10[Classification Loss]
+        F6 --> F11[Combined Loss Function]
+        F9 --> F11
+        F10 --> F11
+        
+        F11 --> F12[Backward Pass]
+        F12 --> F13[Gradient Update]
+        F13 --> F14[Early Stopping]
+    end
+
+    %% Loss Components
+    subgraph "Loss Function Components"
+        G1[Classification Loss<br/>Cross-Entropy] --> G4[Combined Loss]
+        G2[GradCAM Loss<br/>MSE] --> G4
+        G3[Segmentation Loss<br/>Dice Loss] --> G4
+    end
+
+    %% Evaluation
+    subgraph "Comprehensive Evaluation"
+        H1[Trained Model] --> H2[Classification Metrics]
+        H1 --> H3[Segmentation Metrics]
+        
+        H2 --> H4[Accuracy, Sensitivity<br/>Specificity, F1, AUC]
+        H3 --> H5[IoU, Dice, Tversky<br/>Jaccard, Hausdorff]
+        
+        H4 --> H6[Performance Analysis]
+        H5 --> H6
+    end
+
+    %% Connections
+    D5 --> F1
+    E4 --> F2
+    F14 --> H1
+    G4 --> F12
+
+    %% Styling
+    classDef inputStyle fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef processStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef networkStyle fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef trainingStyle fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef lossStyle fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef evalStyle fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+
+    class A1,A2,B1,B2 inputStyle
+    class C1,D1,D2,D3,D4,D5 processStyle
+    class E1,E2,E3,E4 networkStyle
+    class F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,F14 trainingStyle
+    class G1,G2,G3,G4 lossStyle
+    class H1,H2,H3,H4,H5,H6 evalStyle

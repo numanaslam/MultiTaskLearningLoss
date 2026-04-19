@@ -1,0 +1,687 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1600"
+   height="800"
+   version="1.1"
+   id="svg79"
+   sodipodi:docname="diagram1.svg"
+   inkscape:version="1.3 (0e150ed, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview79"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.64502318"
+     inkscape:cx="558.11948"
+     inkscape:cy="265.88192"
+     inkscape:window-width="1440"
+     inkscape:window-height="900"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg79" />
+  <defs
+     id="defs1">
+    <style
+       id="style1">&#10;      .phase-box { fill: #f5f5f5; stroke: #666; stroke-width: 2; stroke-dasharray: 5,5; }&#10;      .process-box { fill: #e3f2fd; stroke: #1976d2; stroke-width: 1.5; }&#10;      .decision-box { fill: #fff9c4; stroke: #f57f17; stroke-width: 1.5; }&#10;      .start-stop { fill: #c8e6c9; stroke: #2e7d32; stroke-width: 2; }&#10;      .loss-box { fill: #fff3e0; stroke: #f57c00; stroke-width: 2; }&#10;      .ood-box { fill: #fce4ec; stroke: #c2185b; stroke-width: 2; }&#10;      .text { font-family: Arial, sans-serif; font-size: 11px; text-anchor: middle; }&#10;      .phase-label { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; }&#10;      .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }&#10;      .arrow-label { font-family: Arial, sans-serif; font-size: 9px; fill: #666; }&#10;    </style>
+    <marker
+       id="arrowhead"
+       markerWidth="10"
+       markerHeight="10"
+       refX="9"
+       refY="3"
+       orient="auto">
+      <polygon
+         points="0 0, 10 3, 0 6"
+         fill="#333"
+         id="polygon1" />
+    </marker>
+  </defs>
+  <!-- Phase 1: Data Preparation -->
+  <rect
+     x="20"
+     y="20"
+     width="400"
+     height="120"
+     class="phase-box"
+     rx="5"
+     id="rect1" />
+  <rect
+     x="29.727352"
+     y="222.38222"
+     width="400"
+     height="120"
+     class="phase-box"
+     rx="5"
+     id="rect1-4"
+     style="fill:#f5f5f5;stroke:#666666;stroke-width:2;stroke-dasharray:5, 5" />
+  <text
+     x="220"
+     y="40"
+     class="phase-label"
+     id="text1">Phase 1: Data Preparation</text>
+  <rect
+     x="40"
+     y="60"
+     width="80"
+     height="50"
+     class="start-stop"
+     rx="5"
+     id="rect2" />
+  <text
+     x="80"
+     y="85"
+     class="text"
+     id="text2">Start</text>
+  <rect
+     x="140"
+     y="60"
+     width="80"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect3" />
+  <text
+     x="180"
+     y="80"
+     class="text"
+     id="text3">Load Data</text>
+  <text
+     x="180"
+     y="95"
+     class="text"
+     id="text4">&amp; Network</text>
+  <rect
+     x="240"
+     y="60"
+     width="80"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect4" />
+  <text
+     x="280"
+     y="80"
+     class="text"
+     id="text5">Precompute</text>
+  <text
+     x="280"
+     y="95"
+     class="text"
+     id="text6">GradCAM</text>
+  <rect
+     x="340"
+     y="60"
+     width="80"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect6" />
+  <text
+     x="380"
+     y="80"
+     class="text"
+     id="text7">5-Fold</text>
+  <text
+     x="380"
+     y="95"
+     class="text"
+     id="text8">Split</text>
+  <!-- Phase 2: Training (Horizontal) -->
+  <rect
+     x="460"
+     y="20"
+     width="1000"
+     height="400"
+     class="phase-box"
+     rx="5"
+     id="rect8" />
+  <text
+     x="960"
+     y="40"
+     class="phase-label"
+     id="text9">Phase 2: K-Fold Cross-Validation Training</text>
+  <!-- Training Loop Entry -->
+  <rect
+     x="480"
+     y="80"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect9" />
+  <text
+     x="530"
+     y="105"
+     class="text"
+     id="text10">Training Loop</text>
+  <text
+     x="530"
+     y="120"
+     class="text"
+     id="text11">For Each Fold</text>
+  <!-- Epoch Loop -->
+  <rect
+     x="620"
+     y="80"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect11" />
+  <text
+     x="670"
+     y="105"
+     class="text"
+     id="text12">For Each</text>
+  <text
+     x="670"
+     y="120"
+     class="text"
+     id="text13">Epoch</text>
+  <!-- Horizontal Training Steps -->
+  <rect
+     x="480"
+     y="180"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect13" />
+  <text
+     x="530"
+     y="205"
+     class="text"
+     id="text14">Data</text>
+  <text
+     x="530"
+     y="220"
+     class="text"
+     id="text15">Augmentation</text>
+  <rect
+     x="620"
+     y="180"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect15" />
+  <text
+     x="670"
+     y="205"
+     class="text"
+     id="text16">Preprocessing</text>
+  <text
+     x="670"
+     y="220"
+     class="text"
+     id="text17">Histogram Match</text>
+  <rect
+     x="760"
+     y="180"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect17" />
+  <text
+     x="810"
+     y="205"
+     class="text"
+     id="text18">Minibatch</text>
+  <text
+     x="810"
+     y="220"
+     class="text"
+     id="text19">Processing</text>
+  <rect
+     x="900"
+     y="180"
+     width="100"
+     height="50"
+     class="loss-box"
+     rx="5"
+     id="rect19" />
+  <text
+     x="950"
+     y="200"
+     class="text"
+     id="text20">Compute</text>
+  <text
+     x="950"
+     y="215"
+     class="text"
+     id="text21">Multi-Task</text>
+  <text
+     x="950"
+     y="230"
+     class="text"
+     id="text22">Loss</text>
+  <rect
+     x="1040"
+     y="180"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect22" />
+  <text
+     x="1090"
+     y="205"
+     class="text"
+     id="text23">Backward</text>
+  <text
+     x="1090"
+     y="220"
+     class="text"
+     id="text24">Pass</text>
+  <rect
+     x="1180"
+     y="180"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect24" />
+  <text
+     x="1230"
+     y="205"
+     class="text"
+     id="text25">Update</text>
+  <text
+     x="1230"
+     y="220"
+     class="text"
+     id="text26">Weights</text>
+  <!-- Validation Check Decision -->
+  <polygon
+     points="1370,230 1320,205 1370,180 "
+     class="decision-box"
+     id="polygon26"
+     transform="matrix(1.5966318,0,0,1.3795853,-786.6899,-78.590161)" />
+  <text
+     x="1369"
+     y="200"
+     class="text"
+     id="text27">Validation</text>
+  <text
+     x="1369"
+     y="215"
+     class="text"
+     id="text28">Check?</text>
+  <!-- Validation Branch (Below) -->
+  <rect
+     x="1320"
+     y="280"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect28" />
+  <text
+     x="1370"
+     y="305"
+     class="text"
+     id="text29">Compute</text>
+  <text
+     x="1370"
+     y="320"
+     class="text"
+     id="text30">Val Loss</text>
+  <!-- Evaluate Fold -->
+  <rect
+     x="1180"
+     y="280"
+     width="100"
+     height="50"
+     class="process-box"
+     rx="5"
+     id="rect32" />
+  <text
+     x="1230"
+     y="305"
+     class="text"
+     id="text33">Evaluate</text>
+  <text
+     x="1230"
+     y="320"
+     class="text"
+     id="text34">Fold</text>
+  <!-- More Folds Decision -->
+  <!-- Phase 3: Evaluation -->
+  <rect
+     x="20"
+     y="480"
+     width="1440"
+     height="280"
+     class="phase-box"
+     rx="5"
+     id="rect36" />
+  <text
+     x="740"
+     y="500"
+     class="phase-label"
+     id="text37">Phase 3: Model Selection &amp; Evaluation</text>
+  <rect
+     x="480"
+     y="520"
+     width="120"
+     height="60"
+     class="process-box"
+     rx="5"
+     id="rect37" />
+  <text
+     x="540"
+     y="545"
+     class="text"
+     id="text38">Aggregate Results</text>
+  <text
+     x="540"
+     y="560"
+     class="text"
+     id="text39">Mean ± Std</text>
+  <text
+     x="540"
+     y="575"
+     class="text"
+     id="text40">Across Folds</text>
+  <rect
+     x="640"
+     y="520"
+     width="120"
+     height="60"
+     class="process-box"
+     rx="5"
+     id="rect40" />
+  <text
+     x="700"
+     y="545"
+     class="text"
+     id="text41">Select Best Fold</text>
+  <text
+     x="700"
+     y="560"
+     class="text"
+     id="text42">Highest Val</text>
+  <text
+     x="700"
+     y="575"
+     class="text"
+     id="text43">Accuracy</text>
+  <rect
+     x="800"
+     y="520"
+     width="120"
+     height="60"
+     class="process-box"
+     rx="5"
+     id="rect43" />
+  <text
+     x="860"
+     y="545"
+     class="text"
+     id="text44">ID Evaluation</text>
+  <text
+     x="860"
+     y="560"
+     class="text"
+     id="text45">ROI Validation</text>
+  <text
+     x="860"
+     y="575"
+     class="text"
+     id="text46">Set</text>
+  <rect
+     x="960"
+     y="520"
+     width="120"
+     height="60"
+     class="ood-box"
+     rx="5"
+     id="rect46" />
+  <text
+     x="1020"
+     y="545"
+     class="text"
+     id="text47">OOD Evaluation</text>
+  <text
+     x="1020"
+     y="560"
+     class="text"
+     id="text48">Full CXR</text>
+  <text
+     x="1020"
+     y="575"
+     class="text"
+     id="text49">Dataset</text>
+  <rect
+     x="1120"
+     y="520"
+     width="120"
+     height="60"
+     class="process-box"
+     rx="5"
+     id="rect49" />
+  <text
+     x="1180"
+     y="540"
+     class="text"
+     id="text50">Compute Metrics</text>
+  <text
+     x="1180"
+     y="555"
+     class="text"
+     id="text51">Accuracy, Precision,</text>
+  <text
+     x="1180"
+     y="570"
+     class="text"
+     id="text52">Recall, F1, AUC,</text>
+  <text
+     x="1180"
+     y="585"
+     class="text"
+     id="text53">IoU, Dice</text>
+  <rect
+     x="1280"
+     y="520"
+     width="120"
+     height="60"
+     class="process-box"
+     rx="5"
+     id="rect53" />
+  <text
+     x="1340"
+     y="545"
+     class="text"
+     id="text54">Save Final</text>
+  <text
+     x="1340"
+     y="560"
+     class="text"
+     id="text55">Model &amp;</text>
+  <text
+     x="1340"
+     y="575"
+     class="text"
+     id="text56">Results</text>
+  <rect
+     x="1420"
+     y="520"
+     width="80"
+     height="60"
+     class="start-stop"
+     rx="5"
+     id="rect56" />
+  <text
+     x="1460"
+     y="550"
+     class="text"
+     id="text57">End</text>
+  <!-- Arrows Phase 1 -->
+  <line
+     x1="120"
+     y1="85"
+     x2="140"
+     y2="85"
+     class="arrow"
+     id="line57" />
+  <line
+     x1="220"
+     y1="85"
+     x2="240"
+     y2="85"
+     class="arrow"
+     id="line58" />
+  <line
+     x1="420"
+     y1="85"
+     x2="480"
+     y2="105"
+     class="arrow"
+     id="line59" />
+  <!-- Arrows Phase 2: Training Loop Entry -->
+  <line
+     x1="580"
+     y1="105"
+     x2="620"
+     y2="105"
+     class="arrow"
+     id="line60" />
+  <!-- Arrow from Epoch to Training Steps -->
+  <line
+     x1="670"
+     y1="130"
+     x2="530"
+     y2="180"
+     class="arrow"
+     id="line61" />
+  <!-- Horizontal arrows in training loop -->
+  <line
+     x1="580"
+     y1="205"
+     x2="620"
+     y2="205"
+     class="arrow"
+     id="line62" />
+  <line
+     x1="720"
+     y1="205"
+     x2="760"
+     y2="205"
+     class="arrow"
+     id="line63" />
+  <line
+     x1="860"
+     y1="205"
+     x2="900"
+     y2="205"
+     class="arrow"
+     id="line64" />
+  <line
+     x1="1000"
+     y1="205"
+     x2="1040"
+     y2="205"
+     class="arrow"
+     id="line65" />
+  <line
+     x1="1140"
+     y1="205"
+     x2="1180"
+     y2="205"
+     class="arrow"
+     id="line66" />
+  <line
+     x1="1280"
+     y1="205"
+     x2="1320"
+     y2="205"
+     class="arrow"
+     id="line67" />
+  <!-- Validation Check Branch -->
+  <line
+     x1="1370"
+     y1="230"
+     x2="1370"
+     y2="280"
+     class="arrow"
+     id="line68" />
+  <!-- Arrow back to epoch loop (Otherwise) -->
+  <path
+     d="M 1320 180 Q 1000 100 620 130"
+     class="arrow"
+     fill="none"
+     id="path68" />
+  <text
+     x="970"
+     y="140"
+     class="arrow-label"
+     id="text69">Otherwise</text>
+  <!-- Early Stopping Decision -->
+  <!-- Arrow back to epoch loop (No) -->
+  <text
+     x="1060"
+     y="200"
+     class="arrow-label"
+     id="text71">No</text>
+  <!-- Evaluate Fold to More Folds -->
+  <!-- More Folds Decision -->
+  <text
+     x="785"
+     y="190"
+     class="arrow-label"
+     id="text72">Yes</text>
+  <!-- More Folds to Aggregate -->
+  <!-- Phase 3 Arrows -->
+  <line
+     x1="600"
+     y1="550"
+     x2="640"
+     y2="550"
+     class="arrow"
+     id="line74" />
+  <line
+     x1="760"
+     y1="550"
+     x2="800"
+     y2="550"
+     class="arrow"
+     id="line75" />
+  <line
+     x1="920"
+     y1="550"
+     x2="960"
+     y2="550"
+     class="arrow"
+     id="line76" />
+  <line
+     x1="1080"
+     y1="550"
+     x2="1120"
+     y2="550"
+     class="arrow"
+     id="line77" />
+  <line
+     x1="1240"
+     y1="550"
+     x2="1280"
+     y2="550"
+     class="arrow"
+     id="line78" />
+  <line
+     x1="1400"
+     y1="550"
+     x2="1420"
+     y2="550"
+     class="arrow"
+     id="line79" />
+</svg>

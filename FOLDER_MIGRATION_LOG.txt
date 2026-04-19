@@ -1,0 +1,170 @@
+FOLDER MIGRATION PLAN
+=====================
+
+Generated: 11-Nov-2025 22:25:51
+
+Instructions:
+1. Review this plan
+2. Use move_file_to_folder() function to migrate files
+3. Update any file paths in scripts after migration
+
+================================================================================
+
+TRAINING SCRIPTS -> src/training/
+--------------------------------------------------------------------------------
+
+  train_model_fixed_overfitting.m
+  compare_loss_functions.m
+  train_vgg16_gradcam.m
+  train_vgg16_lime.m
+  train_vgg16_lime_fixed.m
+  train_vgg16_lime_memory_efficient.m
+  train_vgg16_lime_precomputed.m
+  training_with_precomputed_gradcam.m
+  kriging_hyperparameter_optimization.m
+
+EVALUATION SCRIPTS -> src/evaluation/
+--------------------------------------------------------------------------------
+
+  evaluate_with_tta.m
+  evaluate_ood_performance.m
+  evaluate_cam_ood.m
+  evaluate_cam_ood_complete.m
+  test_ood_cam_complete.m
+  test_ood_full_cxr.m
+  test_cam_ood_cxr.m
+  test_vgg16_on_cxr.m
+
+LOSS FUNCTIONS -> src/loss_functions/
+--------------------------------------------------------------------------------
+
+  custom_loss_gradcam_advanced.m
+  custom_loss_gradcam_clean.m
+  custom_loss_gradcam_comprehensive.m
+  custom_loss_gradcam_optimized.m
+  custom_loss_gradcam_segmentation_enhanced_fixed.m
+  custom_loss_gradcam_soft_iou_kfold.m
+  custom_loss_gradcam_training.m
+  custom_loss_gradcam_with_mask_iou.m
+  custom_loss_gradcam_with_mask_iou_fast.m
+  Loss_grad_cam.m
+  VGG_loss_lime_entropy.m
+  Resnet50_Loss.m
+
+VISUALIZATION SCRIPTS -> src/visualization/
+--------------------------------------------------------------------------------
+
+  visualize_gradcam.m
+  generate_research_paper_visualizations.m
+  create_publication_visualizations_fixed.m
+  create_comprehensive_visualizations.m
+  create_comprehensive_visualizations__.m
+  create_key_visualizations.m
+  run_visualizations.m
+  test_visualization_generator.m
+
+DATA PREPROCESSING -> scripts/data_preprocessing/
+--------------------------------------------------------------------------------
+
+  organize_cxr_images.m
+  organize_cxr_simple.m
+  organize_cxr_with_annotations.m
+  resize_and_copy_to_resized.m
+  resize_and_organize_images.m
+  precompute_gradcams.m
+  create_roi_from_cxr_and_masks.m
+  copy_masks_only.m
+  remove_images_without_masks.m
+  analyze_resized_folder.m
+
+ANALYSIS SCRIPTS -> scripts/analysis/
+--------------------------------------------------------------------------------
+
+  segmentation_mask_similarity_metrics.m
+  vgg16_cam_mask_similarity_metrics.m
+  ssim_based_loss_on_precomputed_gradcam.m
+  ssim_based_loss_on_precomputed_gradcam_2.m
+  ssim_vgg_2.m
+  diagnostic_test.m
+  debug_gradcam.m
+  debug_network.m
+  diagnose_overfitting.m
+  function ablation_and_ood_experiments.m
+  function fast_kfold_segmentation_enhance.m
+  vgg16_custom_loop.m
+  vgg16_custom_loop_loss2.m
+  vgg16_custom_loop_loss3.m
+  vgg16_custom_loop_loss4.m
+  vgg16_roi_entropy_custom_loop.m
+  vgg16_lungs_test.m
+  vgg16_cam_mask_similarity_metrics.m
+
+DOCUMENTATION -> docs/
+--------------------------------------------------------------------------------
+
+GUIDES -> docs/guides/
+  TRAINING_RESULTS_ANALYSIS.md
+  OOD_TEST_README.md
+  KRIGING_OPTIMIZATION_README.md
+  RESEARCH_PAPER_VISUALIZATIONS_README.md
+  IMPROVE_OOD_ACCURACY_README.md
+  IMPLEMENTATION_SUMMARY.md
+
+ANALYSIS REPORTS -> docs/analysis/
+  OVERFITTING_ANALYSIS.md
+  ROC_AUC_ANALYSIS.md
+  MEDICAL_IMAGE_AUGMENTATION.md
+  DOMAIN_ADAPTATION_EXPLANATION.md
+  TVERSKY_LOSS_IMPLEMENTATION.md
+  Comprehensive_Kriging_Analysis.md
+  kriging_optimization_analysis.md
+  kriging_results_tables.md
+  kriging_executive_summary.md
+
+PAPER DOCS -> docs/papers/
+  methodology_1.qmd
+  kriging_latex_format.tex
+  latex_figure_descriptions.md
+  RESEARCH_COMPLETION_PLAN.md
+  FOLDER_STRUCTURE_PLAN.md
+
+MODELS -> models/
+--------------------------------------------------------------------------------
+
+PRETRAINED -> models/pretrained/
+  vgg16_finetuned_on_roi.mat
+  vgg16_trained_on_roi.m
+  custom_cnn_and_vgg16_gradcam_mask_iou.mat
+
+FILES TO REVIEW MANUALLY:
+--------------------------------------------------------------------------------
+
+These files may need manual categorization:
+  custom.m
+  custom.asv
+  custom_lime.m
+  custom_lime.asv
+  custom_roi.m
+  custom_vgg16_transfer_gradcam.m
+  cnn_lime.asv
+  cnn_gradients_display.m
+  code_1.m
+  fast_simple_test.m
+  fine_tuned_lime.m
+  improve_ood_accuracy.m
+  simple_fixed_comprehensive.m
+  block_diagram_vgg16.m
+  workflow.m
+  workflow_diagram.m
+  run_diagram.m
+  run_resize_script.m
+  custom_loss_gradcam_wireframe.svg
+  cxr_*.mat
+  *.asv
+
+
+NOTES:
+- Keep input/ and output/ folders as they are
+- results/ folder structure will be created automatically
+- Update file paths in scripts after migration
+- Consider adding src/ to MATLAB path
