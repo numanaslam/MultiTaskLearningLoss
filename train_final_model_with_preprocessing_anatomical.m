@@ -190,7 +190,8 @@ config.weightDecay = 0.001;
     %    - Combined bias: 2.13 × 1.25 = 2.66x (intermediate between v2.1 and v2.2)
     % 5. Reduced focal_gamma to 1.5 (from 2.0) to reduce over-focusing on hard examples
     % 6. Increased anatomical_reward_weight to 0.75 (from 0.5) to better encourage lung focus
-    config.lambda_cam = 1.0;  % Increased from 0.5 to improve segmentation
+
+config.lambda_cam = 1.0;  % Increased from 0.5 to improve segmentation
 config.lambda_tversky = 5.0;  % Increased from 2.5 to improve IoU/Dice
 config.tversky_alpha = 0.7;
 config.tversky_beta = 0.3;

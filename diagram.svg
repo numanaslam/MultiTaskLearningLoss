@@ -1,0 +1,97 @@
+<svg width="1200" height="700" xmlns="http://www.w3.org/2000/svg">
+
+<style>
+.box { fill:#f5f5f5; stroke:#333; stroke-width:1.5; rx:10; ry:10; }
+.input { fill:#e1f5fe; }
+.loss { fill:#ffebee; stroke-dasharray:5,5; }
+.opt { fill:#e8f5e9; }
+.text { font-family:Arial; font-size:14px; text-anchor:middle; }
+.arrow { stroke:#333; stroke-width:1.5; marker-end:url(#arrow); }
+</style>
+
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="3" orient="auto">
+  <path d="M0,0 L10,3 L0,6 Z" fill="#333"/>
+</marker>
+</defs>
+
+<!-- Inputs -->
+<rect x="50" y="150" width="180" height="50" class="box input"/>
+<text x="140" y="180" class="text">Chest X-Ray ROI</text>
+
+<rect x="50" y="250" width="180" height="50" class="box input"/>
+<text x="140" y="280" class="text">Lung Mask</text>
+
+<!-- Backbone -->
+<rect x="300" y="200" width="200" height="70" class="box"/>
+<text x="400" y="240" class="text">VGG16 Backbone</text>
+
+<!-- Heads -->
+<rect x="550" y="140" width="180" height="50" class="box"/>
+<text x="640" y="170" class="text">Classification Head</text>
+
+<rect x="550" y="280" width="180" height="50" class="box"/>
+<text x="640" y="310" class="text">GradCAM</text>
+
+<!-- Classification -->
+<rect x="780" y="140" width="200" height="50" class="box"/>
+<text x="880" y="170" class="text">Probabilities</text>
+
+<rect x="1020" y="140" width="150" height="50" class="box loss"/>
+<text x="1095" y="170" class="text">Focal Loss</text>
+
+<!-- Attention -->
+<rect x="780" y="280" width="200" height="50" class="box"/>
+<text x="880" y="310" class="text">Student CAM</text>
+
+<rect x="780" y="360" width="200" height="50" class="box"/>
+<text x="880" y="390" class="text">Teacher CAM</text>
+
+<!-- Losses -->
+<rect x="1020" y="260" width="150" height="50" class="box loss"/>
+<text x="1095" y="290" class="text">Cosine Loss</text>
+
+<rect x="1020" y="330" width="150" height="50" class="box loss"/>
+<text x="1095" y="360" class="text">Tversky Loss</text>
+
+<rect x="1020" y="400" width="150" height="50" class="box loss"/>
+<text x="1095" y="430" class="text">Anatomical Loss</text>
+
+<!-- Scaling -->
+<rect x="1200" y="400" width="180" height="50" class="box opt"/>
+<text x="1290" y="430" class="text">Scaled Anatomical</text>
+
+<!-- Total -->
+<rect x="1200" y="260" width="180" height="70" class="box opt"/>
+<text x="1290" y="300" class="text">Total Loss</text>
+
+<!-- Optimizer -->
+<rect x="1450" y="260" width="180" height="70" class="box opt"/>
+<text x="1540" y="300" class="text">SGD Optimizer</text>
+
+<!-- Arrows -->
+<line x1="230" y1="175" x2="300" y2="230" class="arrow"/>
+<line x1="230" y1="275" x2="300" y2="240" class="arrow"/>
+
+<line x1="500" y1="220" x2="550" y2="165" class="arrow"/>
+<line x1="500" y1="240" x2="550" y2="305" class="arrow"/>
+
+<line x1="730" y1="165" x2="780" y2="165" class="arrow"/>
+<line x1="980" y1="165" x2="1020" y2="165" class="arrow"/>
+
+<line x1="730" y1="305" x2="780" y2="305" class="arrow"/>
+
+<line x1="980" y1="305" x2="1020" y2="285" class="arrow"/>
+<line x1="980" y1="305" x2="1020" y2="355" class="arrow"/>
+<line x1="980" y1="305" x2="1020" y2="425" class="arrow"/>
+
+<line x1="230" y1="275" x2="1020" y2="355" class="arrow"/>
+
+<line x1="1170" y1="285" x2="1200" y2="285" class="arrow"/>
+<line x1="1170" y1="355" x2="1200" y2="285" class="arrow"/>
+<line x1="1170" y1="425" x2="1200" y2="285" class="arrow"/>
+
+<line x1="1380" y1="285" x2="1450" y2="285" class="arrow"/>
+<line x1="1540" y1="330" x2="400" y2="270" class="arrow"/>
+
+</svg>

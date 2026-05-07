@@ -1,0 +1,35 @@
+=== OOD PERFORMANCE DEGRADATION ANALYSIS SUMMARY ===
+
+Overall Performance:
+  ID Accuracy:   0.959 (95.9%)
+  OOD Accuracy:  0.611 (61.1%)
+  Degradation:   36.28%
+
+Confidence Analysis:
+  ID mean confidence:  0.542 ± 0.385
+  OOD mean confidence: 0.486 ± 0.168
+  Confidence drop:     0.057
+
+Class-wise Performance:
+  normal:
+    ID error rate:  6.1%
+    OOD error rate: 33.0%
+    Error increase: 26.9%
+
+  ptb:
+    ID error rate:  2.1%
+    OOD error rate: 44.6%
+    Error increase: 42.5%
+
+Key Findings:
+1. Domain shift: Model trained on ROI (cropped) but tested on full CXR
+2. Confidence drop: OOD predictions are less confident
+3. Class imbalance: Check if one class degrades more than the other
+4. Feature mismatch: ROI and CXR may have different feature distributions
+
+Recommendations:
+1. Train on mixed dataset (ROI + Full CXR)
+2. Use domain adaptation techniques
+3. Apply better preprocessing (CLAHE + Z-score showed improvement)
+4. Consider adversarial training for domain robustness
+5. Fine-tune on OOD data (if available)
