@@ -2789,7 +2789,7 @@ try
     cam = max(cam, 0);                    % ReLU
 
     cam = extractdata(cam);
-    cam = imresize(cam, [224 224]);
+    cam = imresize(single(cam), [224 224]);;
 
     maxVal = max(cam(:));
     if maxVal > 1e-6
@@ -3356,7 +3356,7 @@ function cam = postprocess_gradcam_map(cam)
     %   Enhanced version with better contrast and spatial coherence
     
     % CRITICAL: Move to CPU first - image processing functions don't support gpuArray
-    if exists('gather', 'file') && isgpuarray(cam)
+    if isgpuarray(cam)
         cam = gather(cam);
     end
     
