@@ -56,21 +56,21 @@ for i = 1:numel(imds.Files)
             img = uint8(img);
         end
         
-        % Generate GradCAM using the correct method
-        % Use the true label from the dataset (this ensures correct results)
-        trueLabel = imds.Labels(i);
-        gradCAMMap = gradCAM(vggNet, img, char(trueLabel), 'FeatureLayer', workingGradCAMLayer);
+        % Generate GradCAM with explicit true-label targeting.
+        trueLabel = char(string(imds.Labels(i)));
+        gradCAMMap = gradCAM(vggNet, img, trueLabel, 'FeatureLayer', workingGradCAMLayer);
         
         % Ensure map is on CPU and properly sized
         if useGPU && isa(gradCAMMap, 'gpuArray')
             gradCAMMap = gather(gradCAMMap);
         end
         gradCAMMap = double(gradCAMMap);
-        
-        % Normalize to [0, 1] range
-        if max(gradCAMMap(:)) > 0
-            gradCAMMap = (gradCAMMap - min(gradCAMMap(:))) / (max(gradCAMMap(:)) - min(gradCAMMap(:)) + eps);
-        end
+
+        % Robust CAM post-processing:
+        % 1) smooth high-frequency noise
+        % 2) suppress diffuse low-activation background
+        % 3) renormalize to [0, 1]
+        gradCAMMap = postprocess_gradcam_map(gradCAMMap);
         
         precomputedGradCAM{i} = gradCAMMap;
         
@@ -183,3 +183,34 @@ end
 fprintf('  GradCAM computation complete!\n');
 end
 
+function cam = postprocess_gradcam_map(cam)
+    if isempty(cam) || all(~isfinite(cam(:)))
+        cam = 0.5 * ones(224, 224);
+        return;
+    end
+
+    cam(~isfinite(cam)) = 0;
+    cam = max(cam, 0);
+
+    % Mild smoothing improves consistency for noisy PTB heatmaps.
+    cam = imgaussfilt(cam, 1.0);
+
+    % Normalize first.
+    cmin = min(cam(:));
+    cmax = max(cam(:));
+    if cmax > cmin
+        cam = (cam - cmin) / (cmax - cmin + eps);
+    else
+        cam = zeros(size(cam));
+    end
+
+    % Suppress low-importance diffuse background.
+    bg = prctile(cam(:), 60);
+    cam = max(cam - bg, 0);
+
+    % Final renormalization.
+    cmax = max(cam(:));
+    if cmax > 0
+        cam = cam / (cmax + eps);
+    end
+end

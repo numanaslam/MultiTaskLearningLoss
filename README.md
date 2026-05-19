@@ -1,7 +1,7 @@
 # MultiTaskLearningLoss - Project Learnings So Far
 
 ## Scope
-This project trains and evaluates a PTB classifier with optional multi-task losses (GradCAM/segmentation/anatomical), plus OOD evaluation on Full CXR with calibration and uncertainty-aware decision rules.
+This project trains and evaluates a PTB classifier with optional multi-task losses (GradCAM/segmentation/anatomical/Tversky), plus OOD evaluation on Full CXR with calibration and uncertainty-aware decision rules.
 
 ## What We Implemented
 - Stability upgrades in training:

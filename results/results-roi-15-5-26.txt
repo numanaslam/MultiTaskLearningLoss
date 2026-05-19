@@ -1,0 +1,939 @@
+=== FINAL MODEL TRAINING WITH PREPROCESSING (IMPROVED) ===
+Preprocessing Method: histmatch
+Loss Function: Configurable (CE/Focal + optional CAM/Tversky/Anatomical)
+Stability: Gradient clipping + LR warmup + cosine annealing
+OOD Robustness: Preprocessing ensemble + uncertainty estimation
+
+FULL TRAINING MODE: 3 folds, 40 epochs
+Configuration:
+  Preprocessing: none
+  Teacher backbone: roi
+  K-Folds: 3
+  λ_cam: 0.1000 (Cosine similarity for structural alignment)
+  λ_tversky: 2.0000
+  λ_anatomical: 0.2000 (Positive constraint + adaptive scaling)
+  Anatomical reward weight: 0.75
+  Focal alpha: [0.45, 0.55]
+  Class weight multiplier: 1.25x for PTB
+  Focal gamma: 2.00
+  Anatomical Guidance: true (positivity: true)
+  Samples per batch for anatomical loss: 32
+  Learning Rate: 0.0010 (warmup: 3 epochs, cosine annealing)
+  Gradient clipping norm: 1.00
+  Batch Size: 14
+  Max Epochs: 40
+  Early Stopping Patience: 7
+
+Loading data and network...
+  Loading teacher backbone from: models\pretrained\vgg16_finetuned_on_roi.mat
+  Loading cached GradCAM maps and masks...
+  Using cached GradCAM maps
+Dataset loaded: 704 samples, 2 classes
+
+Creating 3-fold stratified cross-validation splits...
+K-fold splits created successfully!
+
+=== STARTING K-FOLD CROSS-VALIDATION TRAINING ===
+Training with preprocessing: none
+This may take a while...
+
+
+--- Fold 1/3 ---
+  Train: 469 samples, Val: 235 samples
+Starting training with enhanced stability...
+
+Epoch 1/40
+    Batch 10 - Loss components: Cls=0.314, CAM=0.668, Tversky=0.702, Anatomical=1.467, Total=2.079
+    Batch 20 - Loss components: Cls=0.116, CAM=0.678, Tversky=0.730, Anatomical=1.630, Total=1.969
+    Batch 30 - Loss components: Cls=0.202, CAM=0.705, Tversky=0.715, Anatomical=1.403, Total=1.983
+  Train Loss: 1.9632, Train Acc: 0.472
+  Val Loss: 1.9088, Val Acc: 0.489, Val IoU: 0.211, Val Dice: 0.322
+  Val CM [TN FP; FN TP] = [0 120; 0 115]
+  ✓ Validation accuracy improved!
+
+Epoch 2/40
+    Batch 10 - Loss components: Cls=0.126, CAM=0.686, Tversky=0.690, Anatomical=0.936, Total=1.762
+    Batch 20 - Loss components: Cls=0.247, CAM=0.652, Tversky=0.716, Anatomical=1.608, Total=2.066
+    Batch 30 - Loss components: Cls=0.169, CAM=0.727, Tversky=0.692, Anatomical=0.510, Total=1.727
+  Train Loss: 1.9321, Train Acc: 0.517
+
+Epoch 3/40
+    Batch 10 - Loss components: Cls=0.154, CAM=0.626, Tversky=0.694, Anatomical=0.962, Total=1.798
+    Batch 20 - Loss components: Cls=0.088, CAM=0.650, Tversky=0.713, Anatomical=1.241, Total=1.828
+    Batch 30 - Loss components: Cls=0.192, CAM=0.672, Tversky=0.714, Anatomical=1.264, Total=1.941
+  Train Loss: 1.9236, Train Acc: 0.487
+  Val Loss: 2.0399, Val Acc: 0.506, Val IoU: 0.143, Val Dice: 0.222
+  Val CM [TN FP; FN TP] = [119 1; 115 0]
+  ✓ Validation accuracy improved!
+
+Epoch 4/40
+    Batch 10 - Loss components: Cls=0.108, CAM=0.697, Tversky=0.728, Anatomical=1.760, Total=1.984
+    Batch 20 - Loss components: Cls=0.154, CAM=0.696, Tversky=0.720, Anatomical=1.834, Total=2.032
+    Batch 30 - Loss components: Cls=0.165, CAM=0.678, Tversky=0.734, Anatomical=1.430, Total=1.987
+  Train Loss: 1.9347, Train Acc: 0.502
+
+Epoch 5/40
+    Batch 10 - Loss components: Cls=0.131, CAM=0.716, Tversky=0.740, Anatomical=2.018, Total=2.086
+    Batch 20 - Loss components: Cls=0.111, CAM=0.652, Tversky=0.716, Anatomical=1.283, Total=1.865
+    Batch 30 - Loss components: Cls=0.139, CAM=0.640, Tversky=0.754, Anatomical=1.823, Total=2.075
+  Train Loss: 1.9163, Train Acc: 0.526
+
+Epoch 6/40
+    Batch 10 - Loss components: Cls=0.090, CAM=0.632, Tversky=0.690, Anatomical=1.071, Total=1.746
+    Batch 20 - Loss components: Cls=0.116, CAM=0.695, Tversky=0.712, Anatomical=1.098, Total=1.830
+    Batch 30 - Loss components: Cls=0.123, CAM=0.664, Tversky=0.737, Anatomical=2.039, Total=2.072
+  Train Loss: 1.9581, Train Acc: 0.511
+  Val Loss: 1.9189, Val Acc: 0.511, Val IoU: 0.089, Val Dice: 0.155
+  Val CM [TN FP; FN TP] = [120 0; 115 0]
+
+Epoch 7/40
+    Batch 10 - Loss components: Cls=0.154, CAM=0.652, Tversky=0.714, Anatomical=1.379, Total=1.924
+    Batch 20 - Loss components: Cls=0.117, CAM=0.631, Tversky=0.727, Anatomical=1.081, Total=1.849
+    Batch 30 - Loss components: Cls=0.102, CAM=0.680, Tversky=0.742, Anatomical=1.762, Total=2.006
+  Train Loss: 1.9346, Train Acc: 0.481
+
+Epoch 8/40
+    Batch 10 - Loss components: Cls=0.090, CAM=0.635, Tversky=0.736, Anatomical=1.633, Total=1.951
+    Batch 20 - Loss components: Cls=0.155, CAM=0.633, Tversky=0.714, Anatomical=1.173, Total=1.880
+    Batch 30 - Loss components: Cls=0.151, CAM=0.675, Tversky=0.698, Anatomical=0.997, Total=1.815
+  Train Loss: 1.8937, Train Acc: 0.515
+
+Epoch 9/40
+    Batch 10 - Loss components: Cls=0.075, CAM=0.662, Tversky=0.725, Anatomical=1.261, Total=1.843
+    Batch 20 - Loss components: Cls=0.092, CAM=0.663, Tversky=0.731, Anatomical=1.311, Total=1.883
+    Batch 30 - Loss components: Cls=0.107, CAM=0.632, Tversky=0.710, Anatomical=1.122, Total=1.814
+  Train Loss: 1.8895, Train Acc: 0.513
+  Val Loss: 1.8495, Val Acc: 0.489, Val IoU: 0.065, Val Dice: 0.112
+  Val CM [TN FP; FN TP] = [0 120; 0 115]
+
+Epoch 10/40
+    Batch 10 - Loss components: Cls=0.133, CAM=0.656, Tversky=0.698, Anatomical=0.723, Total=1.739
+    Batch 20 - Loss components: Cls=0.108, CAM=0.666, Tversky=0.739, Anatomical=1.397, Total=1.931
+    Batch 30 - Loss components: Cls=0.170, CAM=0.728, Tversky=0.734, Anatomical=1.030, Total=1.917
+  Train Loss: 1.9032, Train Acc: 0.491
+
+Epoch 11/40
+    Batch 10 - Loss components: Cls=0.098, CAM=0.706, Tversky=0.710, Anatomical=1.151, Total=1.819
+    Batch 20 - Loss components: Cls=0.122, CAM=0.668, Tversky=0.715, Anatomical=1.785, Total=1.975
+    Batch 30 - Loss components: Cls=0.074, CAM=0.665, Tversky=0.732, Anatomical=1.491, Total=1.902
+  Train Loss: 1.8809, Train Acc: 0.515
+
+Epoch 12/40
+    Batch 10 - Loss components: Cls=0.098, CAM=0.667, Tversky=0.734, Anatomical=0.964, Total=1.824
+    Batch 20 - Loss components: Cls=0.111, CAM=0.660, Tversky=0.719, Anatomical=1.114, Total=1.838
+    Batch 30 - Loss components: Cls=0.080, CAM=0.651, Tversky=0.737, Anatomical=1.872, Total=1.994
+  Train Loss: 1.8951, Train Acc: 0.528
+  Val Loss: 1.9250, Val Acc: 0.489, Val IoU: 0.067, Val Dice: 0.119
+  Val CM [TN FP; FN TP] = [0 120; 0 115]
+
+Epoch 13/40
+    Batch 10 - Loss components: Cls=0.114, CAM=0.719, Tversky=0.731, Anatomical=1.398, Total=1.927
+    Batch 20 - Loss components: Cls=0.103, CAM=0.639, Tversky=0.721, Anatomical=1.367, Total=1.883
+    Batch 30 - Loss components: Cls=0.135, CAM=0.673, Tversky=0.709, Anatomical=1.404, Total=1.901
+  Train Loss: 1.9043, Train Acc: 0.511
+
+Epoch 14/40
+    Batch 10 - Loss components: Cls=0.122, CAM=0.648, Tversky=0.714, Anatomical=1.422, Total=1.900
+    Batch 20 - Loss components: Cls=0.095, CAM=0.688, Tversky=0.717, Anatomical=1.445, Total=1.886
+    Batch 30 - Loss components: Cls=0.124, CAM=0.672, Tversky=0.719, Anatomical=1.305, Total=1.890
+  Train Loss: 1.9043, Train Acc: 0.526
+
+Epoch 15/40
+    Batch 10 - Loss components: Cls=0.121, CAM=0.652, Tversky=0.729, Anatomical=1.389, Total=1.922
+    Batch 20 - Loss components: Cls=0.103, CAM=0.701, Tversky=0.709, Anatomical=1.207, Total=1.832
+    Batch 30 - Loss components: Cls=0.151, CAM=0.643, Tversky=0.729, Anatomical=1.530, Total=1.980
+  Train Loss: 1.8957, Train Acc: 0.502
+  Val Loss: 1.8666, Val Acc: 0.630, Val IoU: 0.061, Val Dice: 0.109
+  Val CM [TN FP; FN TP] = [50 70; 17 98]
+  ✓ Validation accuracy improved!
+
+Epoch 16/40
+    Batch 10 - Loss components: Cls=0.099, CAM=0.671, Tversky=0.725, Anatomical=1.038, Total=1.824
+    Batch 20 - Loss components: Cls=0.098, CAM=0.696, Tversky=0.742, Anatomical=1.768, Total=2.005
+    Batch 30 - Loss components: Cls=0.083, CAM=0.653, Tversky=0.718, Anatomical=1.166, Total=1.817
+  Train Loss: 1.9094, Train Acc: 0.506
+
+Epoch 17/40
+    Batch 10 - Loss components: Cls=0.115, CAM=0.617, Tversky=0.714, Anatomical=1.254, Total=1.855
+    Batch 20 - Loss components: Cls=0.091, CAM=0.634, Tversky=0.725, Anatomical=1.498, Total=1.904
+    Batch 30 - Loss components: Cls=0.099, CAM=0.643, Tversky=0.732, Anatomical=1.434, Total=1.914
+  Train Loss: 1.8991, Train Acc: 0.548
+
+Epoch 18/40
+    Batch 10 - Loss components: Cls=0.103, CAM=0.684, Tversky=0.745, Anatomical=1.733, Total=2.007
+    Batch 20 - Loss components: Cls=0.091, CAM=0.716, Tversky=0.734, Anatomical=1.232, Total=1.877
+    Batch 30 - Loss components: Cls=0.087, CAM=0.665, Tversky=0.721, Anatomical=1.215, Total=1.838
+  Train Loss: 1.9056, Train Acc: 0.561
+  Val Loss: 1.8455, Val Acc: 0.651, Val IoU: 0.085, Val Dice: 0.148
+  Val CM [TN FP; FN TP] = [63 57; 25 90]
+  ✓ Validation accuracy improved!
+
+Epoch 19/40
+    Batch 10 - Loss components: Cls=0.083, CAM=0.644, Tversky=0.708, Anatomical=1.189, Total=1.801
+    Batch 20 - Loss components: Cls=0.084, CAM=0.679, Tversky=0.769, Anatomical=2.509, Total=2.191
+    Batch 30 - Loss components: Cls=0.100, CAM=0.692, Tversky=0.732, Anatomical=1.588, Total=1.951
+  Train Loss: 1.9107, Train Acc: 0.535
+
+Epoch 20/40
+    Batch 10 - Loss components: Cls=0.087, CAM=0.680, Tversky=0.715, Anatomical=1.003, Total=1.786
+    Batch 20 - Loss components: Cls=0.107, CAM=0.628, Tversky=0.752, Anatomical=2.116, Total=2.098
+    Batch 30 - Loss components: Cls=0.078, CAM=0.681, Tversky=0.732, Anatomical=1.434, Total=1.898
+  Train Loss: 1.8702, Train Acc: 0.519
+
+Epoch 21/40
+    Batch 10 - Loss components: Cls=0.089, CAM=0.649, Tversky=0.711, Anatomical=1.525, Total=1.881
+    Batch 20 - Loss components: Cls=0.083, CAM=0.640, Tversky=0.712, Anatomical=0.922, Total=1.755
+    Batch 30 - Loss components: Cls=0.091, CAM=0.657, Tversky=0.733, Anatomical=1.483, Total=1.919
+  Train Loss: 1.9154, Train Acc: 0.509
+  Val Loss: 1.8424, Val Acc: 0.498, Val IoU: 0.090, Val Dice: 0.157
+  Val CM [TN FP; FN TP] = [2 118; 0 115]
+
+Epoch 22/40
+    Batch 10 - Loss components: Cls=0.104, CAM=0.636, Tversky=0.775, Anatomical=1.705, Total=2.058
+    Batch 20 - Loss components: Cls=0.080, CAM=0.654, Tversky=0.721, Anatomical=1.833, Total=1.954
+    Batch 30 - Loss components: Cls=0.092, CAM=0.689, Tversky=0.731, Anatomical=1.855, Total=1.994
+  Train Loss: 1.9053, Train Acc: 0.556
+
+Epoch 23/40
+    Batch 10 - Loss components: Cls=0.102, CAM=0.674, Tversky=0.716, Anatomical=1.008, Total=1.803
+    Batch 20 - Loss components: Cls=0.111, CAM=0.662, Tversky=0.730, Anatomical=1.715, Total=1.981
+    Batch 30 - Loss components: Cls=0.079, CAM=0.660, Tversky=0.761, Anatomical=1.720, Total=2.011
+  Train Loss: 1.8790, Train Acc: 0.604
+
+Epoch 24/40
+    Batch 10 - Loss components: Cls=0.090, CAM=0.649, Tversky=0.729, Anatomical=1.224, Total=1.858
+    Batch 20 - Loss components: Cls=0.099, CAM=0.706, Tversky=0.746, Anatomical=1.626, Total=1.987
+    Batch 30 - Loss components: Cls=0.072, CAM=0.668, Tversky=0.686, Anatomical=0.919, Total=1.696
+  Train Loss: 1.8657, Train Acc: 0.569
+  Val Loss: 1.8643, Val Acc: 0.498, Val IoU: 0.106, Val Dice: 0.180
+  Val CM [TN FP; FN TP] = [2 118; 0 115]
+
+Epoch 25/40
+    Batch 10 - Loss components: Cls=0.076, CAM=0.664, Tversky=0.746, Anatomical=1.534, Total=1.941
+    Batch 20 - Loss components: Cls=0.093, CAM=0.643, Tversky=0.741, Anatomical=1.533, Total=1.947
+    Batch 30 - Loss components: Cls=0.100, CAM=0.688, Tversky=0.725, Anatomical=1.462, Total=1.912
+  Train Loss: 1.8669, Train Acc: 0.550
+
+Epoch 26/40
+    Batch 10 - Loss components: Cls=0.091, CAM=0.673, Tversky=0.728, Anatomical=1.125, Total=1.839
+    Batch 20 - Loss components: Cls=0.106, CAM=0.673, Tversky=0.706, Anatomical=1.636, Total=1.912
+    Batch 30 - Loss components: Cls=0.086, CAM=0.648, Tversky=0.712, Anatomical=1.100, Total=1.795
+  Train Loss: 1.8636, Train Acc: 0.565
+
+Epoch 27/40
+    Batch 10 - Loss components: Cls=0.106, CAM=0.650, Tversky=0.730, Anatomical=1.559, Total=1.943
+    Batch 20 - Loss components: Cls=0.076, CAM=0.626, Tversky=0.731, Anatomical=1.457, Total=1.892
+    Batch 30 - Loss components: Cls=0.077, CAM=0.665, Tversky=0.683, Anatomical=1.239, Total=1.757
+  Train Loss: 1.8673, Train Acc: 0.626
+  Val Loss: 1.9130, Val Acc: 0.626, Val IoU: 0.164, Val Dice: 0.268
+  Val CM [TN FP; FN TP] = [44 76; 12 103]
+
+Epoch 28/40
+    Batch 10 - Loss components: Cls=0.075, CAM=0.669, Tversky=0.702, Anatomical=1.705, Total=1.887
+    Batch 20 - Loss components: Cls=0.089, CAM=0.666, Tversky=0.723, Anatomical=1.345, Total=1.871
+    Batch 30 - Loss components: Cls=0.080, CAM=0.719, Tversky=0.672, Anatomical=0.481, Total=1.592
+  Train Loss: 1.8373, Train Acc: 0.610
+
+Epoch 29/40
+    Batch 10 - Loss components: Cls=0.093, CAM=0.713, Tversky=0.731, Anatomical=1.530, Total=1.933
+    Batch 20 - Loss components: Cls=0.062, CAM=0.667, Tversky=0.712, Anatomical=1.253, Total=1.802
+    Batch 30 - Loss components: Cls=0.106, CAM=0.687, Tversky=0.714, Anatomical=1.304, Total=1.864
+  Train Loss: 1.8476, Train Acc: 0.584
+
+Epoch 30/40
+    Batch 10 - Loss components: Cls=0.077, CAM=0.667, Tversky=0.734, Anatomical=1.061, Total=1.824
+    Batch 20 - Loss components: Cls=0.081, CAM=0.633, Tversky=0.702, Anatomical=0.984, Total=1.744
+    Batch 30 - Loss components: Cls=0.070, CAM=0.687, Tversky=0.739, Anatomical=1.072, Total=1.831
+  Train Loss: 1.8134, Train Acc: 0.647
+  Val Loss: 1.7856, Val Acc: 0.672, Val IoU: 0.208, Val Dice: 0.331
+  Val CM [TN FP; FN TP] = [67 53; 24 91]
+  ✓ Validation accuracy improved!
+
+Epoch 31/40
+    Batch 10 - Loss components: Cls=0.092, CAM=0.650, Tversky=0.702, Anatomical=0.743, Total=1.709
+    Batch 20 - Loss components: Cls=0.069, CAM=0.683, Tversky=0.719, Anatomical=1.035, Total=1.783
+    Batch 30 - Loss components: Cls=0.092, CAM=0.644, Tversky=0.712, Anatomical=1.095, Total=1.800
+  Train Loss: 1.8310, Train Acc: 0.623
+
+Epoch 32/40
+    Batch 10 - Loss components: Cls=0.093, CAM=0.667, Tversky=0.730, Anatomical=1.276, Total=1.875
+    Batch 20 - Loss components: Cls=0.082, CAM=0.672, Tversky=0.718, Anatomical=0.813, Total=1.747
+    Batch 30 - Loss components: Cls=0.083, CAM=0.655, Tversky=0.718, Anatomical=1.402, Total=1.865
+  Train Loss: 1.8617, Train Acc: 0.619
+
+Epoch 33/40
+    Batch 10 - Loss components: Cls=0.075, CAM=0.681, Tversky=0.720, Anatomical=1.479, Total=1.878
+    Batch 20 - Loss components: Cls=0.072, CAM=0.624, Tversky=0.710, Anatomical=0.946, Total=1.743
+    Batch 30 - Loss components: Cls=0.087, CAM=0.643, Tversky=0.725, Anatomical=1.210, Total=1.845
+  Train Loss: 1.8678, Train Acc: 0.626
+  Val Loss: 1.9003, Val Acc: 0.677, Val IoU: 0.164, Val Dice: 0.270
+  Val CM [TN FP; FN TP] = [68 52; 24 91]
+
+Epoch 34/40
+    Batch 10 - Loss components: Cls=0.085, CAM=0.663, Tversky=0.725, Anatomical=1.478, Total=1.896
+    Batch 20 - Loss components: Cls=0.105, CAM=0.666, Tversky=0.714, Anatomical=1.358, Total=1.870
+    Batch 30 - Loss components: Cls=0.081, CAM=0.661, Tversky=0.724, Anatomical=1.087, Total=1.812
+  Train Loss: 1.8447, Train Acc: 0.602
+
+Epoch 35/40
+    Batch 10 - Loss components: Cls=0.056, CAM=0.657, Tversky=0.709, Anatomical=1.149, Total=1.770
+    Batch 20 - Loss components: Cls=0.088, CAM=0.650, Tversky=0.714, Anatomical=1.171, Total=1.817
+    Batch 30 - Loss components: Cls=0.081, CAM=0.673, Tversky=0.730, Anatomical=1.565, Total=1.921
+  Train Loss: 1.8264, Train Acc: 0.658
+
+Epoch 36/40
+    Batch 10 - Loss components: Cls=0.078, CAM=0.636, Tversky=0.732, Anatomical=2.008, Total=2.008
+    Batch 20 - Loss components: Cls=0.081, CAM=0.634, Tversky=0.696, Anatomical=1.136, Total=1.764
+    Batch 30 - Loss components: Cls=0.079, CAM=0.644, Tversky=0.695, Anatomical=0.749, Total=1.684
+  Train Loss: 1.8549, Train Acc: 0.623
+  Val Loss: 1.8331, Val Acc: 0.677, Val IoU: 0.186, Val Dice: 0.302
+  Val CM [TN FP; FN TP] = [68 52; 24 91]
+
+Epoch 37/40
+    Batch 10 - Loss components: Cls=0.094, CAM=0.689, Tversky=0.707, Anatomical=1.375, Total=1.851
+    Batch 20 - Loss components: Cls=0.100, CAM=0.636, Tversky=0.692, Anatomical=0.954, Total=1.739
+    Batch 30 - Loss components: Cls=0.077, CAM=0.618, Tversky=0.728, Anatomical=1.496, Total=1.895
+  Train Loss: 1.8312, Train Acc: 0.615
+
+Epoch 38/40
+    Batch 10 - Loss components: Cls=0.071, CAM=0.638, Tversky=0.728, Anatomical=1.184, Total=1.828
+    Batch 20 - Loss components: Cls=0.084, CAM=0.688, Tversky=0.685, Anatomical=0.906, Total=1.705
+    Batch 30 - Loss components: Cls=0.096, CAM=0.684, Tversky=0.701, Anatomical=0.762, Total=1.718
+  Train Loss: 1.8247, Train Acc: 0.645
+
+Epoch 39/40
+    Batch 10 - Loss components: Cls=0.081, CAM=0.627, Tversky=0.718, Anatomical=1.032, Total=1.787
+    Batch 20 - Loss components: Cls=0.053, CAM=0.641, Tversky=0.718, Anatomical=1.602, Total=1.874
+    Batch 30 - Loss components: Cls=0.080, CAM=0.614, Tversky=0.707, Anatomical=1.104, Total=1.776
+  Train Loss: 1.8467, Train Acc: 0.660
+  Val Loss: 1.8983, Val Acc: 0.677, Val IoU: 0.178, Val Dice: 0.293
+  Val CM [TN FP; FN TP] = [68 52; 24 91]
+
+Epoch 40/40
+    Batch 10 - Loss components: Cls=0.064, CAM=0.647, Tversky=0.728, Anatomical=1.698, Total=1.924
+    Batch 20 - Loss components: Cls=0.099, CAM=0.660, Tversky=0.719, Anatomical=1.623, Total=1.928
+    Batch 30 - Loss components: Cls=0.099, CAM=0.717, Tversky=0.706, Anatomical=1.591, Total=1.901
+  Train Loss: 1.8443, Train Acc: 0.632
+  Evaluating fold 1...
+  Fold 1 Results: Acc=0.672, Dice=0.303, IoU=0.188
+  ✓ Checkpoint saved: models\checkpoints\checkpoint_none_fold_1_improved.mat
+
+--- Fold 2/3 ---
+  Train: 469 samples, Val: 235 samples
+Starting training with enhanced stability...
+
+Epoch 1/40
+    Batch 10 - Loss components: Cls=0.272, CAM=0.771, Tversky=0.793, Anatomical=2.065, Total=2.347
+    Batch 20 - Loss components: Cls=0.146, CAM=0.688, Tversky=0.791, Anatomical=2.727, Total=2.342
+    Batch 30 - Loss components: Cls=0.196, CAM=0.683, Tversky=0.786, Anatomical=1.903, Total=2.217
+  Train Loss: 2.3213, Train Acc: 0.485
+  Val Loss: 2.2936, Val Acc: 0.511, Val IoU: 0.184, Val Dice: 0.289
+  Val CM [TN FP; FN TP] = [120 0; 115 0]
+  ✓ Validation accuracy improved!
+
+Epoch 2/40
+    Batch 10 - Loss components: Cls=0.164, CAM=0.723, Tversky=0.808, Anatomical=2.833, Total=2.418
+    Batch 20 - Loss components: Cls=0.107, CAM=0.740, Tversky=0.796, Anatomical=2.166, Total=2.205
+    Batch 30 - Loss components: Cls=0.130, CAM=0.728, Tversky=0.764, Anatomical=2.086, Total=2.147
+  Train Loss: 2.2921, Train Acc: 0.472
+
+Epoch 3/40
+    Batch 10 - Loss components: Cls=0.120, CAM=0.737, Tversky=0.821, Anatomical=3.024, Total=2.440
+    Batch 20 - Loss components: Cls=0.210, CAM=0.715, Tversky=0.798, Anatomical=3.065, Total=2.490
+    Batch 30 - Loss components: Cls=0.118, CAM=0.760, Tversky=0.758, Anatomical=2.119, Total=2.133
+  Train Loss: 2.2512, Train Acc: 0.468
+  Val Loss: 2.2412, Val Acc: 0.489, Val IoU: 0.093, Val Dice: 0.156
+  Val CM [TN FP; FN TP] = [0 120; 0 115]
+
+Epoch 4/40
+    Batch 10 - Loss components: Cls=0.106, CAM=0.702, Tversky=0.781, Anatomical=2.206, Total=2.180
+    Batch 20 - Loss components: Cls=0.139, CAM=0.701, Tversky=0.792, Anatomical=2.763, Total=2.346
+    Batch 30 - Loss components: Cls=0.067, CAM=0.695, Tversky=0.778, Anatomical=2.191, Total=2.130
+  Train Loss: 2.2492, Train Acc: 0.519
+
+Epoch 5/40
+    Batch 10 - Loss components: Cls=0.170, CAM=0.761, Tversky=0.798, Anatomical=2.597, Total=2.362
+    Batch 20 - Loss components: Cls=0.200, CAM=0.747, Tversky=0.772, Anatomical=1.886, Total=2.196
+    Batch 30 - Loss components: Cls=0.171, CAM=0.760, Tversky=0.744, Anatomical=0.935, Total=1.922
+  Train Loss: 2.1843, Train Acc: 0.515
+
+Epoch 6/40
+    Batch 10 - Loss components: Cls=0.102, CAM=0.762, Tversky=0.764, Anatomical=1.905, Total=2.087
+    Batch 20 - Loss components: Cls=0.160, CAM=0.726, Tversky=0.800, Anatomical=2.146, Total=2.262
+    Batch 30 - Loss components: Cls=0.080, CAM=0.724, Tversky=0.773, Anatomical=1.909, Total=2.080
+  Train Loss: 2.1992, Train Acc: 0.511
+  Val Loss: 2.2072, Val Acc: 0.489, Val IoU: 0.102, Val Dice: 0.161
+  Val CM [TN FP; FN TP] = [0 120; 0 115]
+
+Epoch 7/40
+    Batch 10 - Loss components: Cls=0.180, CAM=0.748, Tversky=0.810, Anatomical=2.569, Total=2.389
+    Batch 20 - Loss components: Cls=0.113, CAM=0.756, Tversky=0.768, Anatomical=2.221, Total=2.168
+    Batch 30 - Loss components: Cls=0.107, CAM=0.737, Tversky=0.790, Anatomical=2.153, Total=2.191
+  Train Loss: 2.2296, Train Acc: 0.498
+
+Epoch 8/40
+    Batch 10 - Loss components: Cls=0.099, CAM=0.743, Tversky=0.796, Anatomical=2.727, Total=2.311
+    Batch 20 - Loss components: Cls=0.132, CAM=0.718, Tversky=0.793, Anatomical=2.444, Total=2.278
+    Batch 30 - Loss components: Cls=0.156, CAM=0.687, Tversky=0.799, Anatomical=2.383, Total=2.299
+  Train Loss: 2.2355, Train Acc: 0.509
+
+Epoch 9/40
+    Batch 10 - Loss components: Cls=0.144, CAM=0.658, Tversky=0.756, Anatomical=1.780, Total=2.078
+    Batch 20 - Loss components: Cls=0.092, CAM=0.738, Tversky=0.777, Anatomical=2.156, Total=2.151
+    Batch 30 - Loss components: Cls=0.143, CAM=0.714, Tversky=0.780, Anatomical=2.589, Total=2.292
+  Train Loss: 2.2392, Train Acc: 0.496
+  Val Loss: 2.1511, Val Acc: 0.489, Val IoU: 0.118, Val Dice: 0.183
+  Val CM [TN FP; FN TP] = [0 120; 0 115]
+
+Epoch 10/40
+    Batch 10 - Loss components: Cls=0.089, CAM=0.775, Tversky=0.778, Anatomical=2.110, Total=2.145
+    Batch 20 - Loss components: Cls=0.160, CAM=0.734, Tversky=0.812, Anatomical=2.338, Total=2.325
+    Batch 30 - Loss components: Cls=0.112, CAM=0.770, Tversky=0.797, Anatomical=2.151, Total=2.212
+  Train Loss: 2.2261, Train Acc: 0.506
+
+Epoch 11/40
+    Batch 10 - Loss components: Cls=0.118, CAM=0.713, Tversky=0.766, Anatomical=2.269, Total=2.174
+    Batch 20 - Loss components: Cls=0.105, CAM=0.694, Tversky=0.771, Anatomical=2.705, Total=2.257
+    Batch 30 - Loss components: Cls=0.062, CAM=0.747, Tversky=0.792, Anatomical=2.896, Total=2.300
+  Train Loss: 2.2312, Train Acc: 0.513
+
+Epoch 12/40
+    Batch 10 - Loss components: Cls=0.087, CAM=0.768, Tversky=0.821, Anatomical=3.267, Total=2.460
+    Batch 20 - Loss components: Cls=0.131, CAM=0.733, Tversky=0.763, Anatomical=2.007, Total=2.131
+    Batch 30 - Loss components: Cls=0.105, CAM=0.679, Tversky=0.762, Anatomical=1.664, Total=2.030
+  Train Loss: 2.2136, Train Acc: 0.513
+  Val Loss: 2.1779, Val Acc: 0.489, Val IoU: 0.126, Val Dice: 0.208
+  Val CM [TN FP; FN TP] = [0 120; 0 115]
+
+Epoch 13/40
+    Batch 10 - Loss components: Cls=0.102, CAM=0.702, Tversky=0.775, Anatomical=2.158, Total=2.155
+    Batch 20 - Loss components: Cls=0.102, CAM=0.701, Tversky=0.780, Anatomical=2.372, Total=2.206
+    Batch 30 - Loss components: Cls=0.075, CAM=0.724, Tversky=0.812, Anatomical=2.285, Total=2.229
+  Train Loss: 2.2301, Train Acc: 0.539
+
+Epoch 14/40
+    Batch 10 - Loss components: Cls=0.086, CAM=0.676, Tversky=0.810, Anatomical=2.544, Total=2.282
+    Batch 20 - Loss components: Cls=0.140, CAM=0.692, Tversky=0.776, Anatomical=2.627, Total=2.286
+    Batch 30 - Loss components: Cls=0.098, CAM=0.724, Tversky=0.797, Anatomical=2.531, Total=2.270
+  Train Loss: 2.2421, Train Acc: 0.535
+
+Epoch 15/40
+    Batch 10 - Loss components: Cls=0.101, CAM=0.751, Tversky=0.780, Anatomical=2.393, Total=2.214
+    Batch 20 - Loss components: Cls=0.090, CAM=0.723, Tversky=0.781, Anatomical=2.796, Total=2.283
+    Batch 30 - Loss components: Cls=0.106, CAM=0.732, Tversky=0.788, Anatomical=1.993, Total=2.154
+  Train Loss: 2.2183, Train Acc: 0.494
+  Val Loss: 2.1958, Val Acc: 0.609, Val IoU: 0.144, Val Dice: 0.225
+  Val CM [TN FP; FN TP] = [113 7; 85 30]
+  ✓ Validation accuracy improved!
+
+Epoch 16/40
+    Batch 10 - Loss components: Cls=0.128, CAM=0.740, Tversky=0.772, Anatomical=2.129, Total=2.173
+    Batch 20 - Loss components: Cls=0.111, CAM=0.717, Tversky=0.774, Anatomical=2.375, Total=2.205
+    Batch 30 - Loss components: Cls=0.087, CAM=0.740, Tversky=0.797, Anatomical=2.339, Total=2.222
+  Train Loss: 2.2210, Train Acc: 0.506
+
+Epoch 17/40
+    Batch 10 - Loss components: Cls=0.071, CAM=0.718, Tversky=0.807, Anatomical=2.306, Total=2.219
+    Batch 20 - Loss components: Cls=0.088, CAM=0.740, Tversky=0.770, Anatomical=2.347, Total=2.171
+    Batch 30 - Loss components: Cls=0.087, CAM=0.720, Tversky=0.783, Anatomical=2.442, Total=2.213
+  Train Loss: 2.2014, Train Acc: 0.524
+
+Epoch 18/40
+    Batch 10 - Loss components: Cls=0.083, CAM=0.720, Tversky=0.753, Anatomical=1.944, Total=2.050
+    Batch 20 - Loss components: Cls=0.075, CAM=0.726, Tversky=0.811, Anatomical=2.545, Total=2.278
+    Batch 30 - Loss components: Cls=0.100, CAM=0.736, Tversky=0.802, Anatomical=2.563, Total=2.290
+  Train Loss: 2.1585, Train Acc: 0.563
+  Val Loss: 2.2037, Val Acc: 0.489, Val IoU: 0.177, Val Dice: 0.278
+  Val CM [TN FP; FN TP] = [0 120; 0 115]
+
+Epoch 19/40
+    Batch 10 - Loss components: Cls=0.072, CAM=0.734, Tversky=0.788, Anatomical=2.214, Total=2.163
+    Batch 20 - Loss components: Cls=0.088, CAM=0.687, Tversky=0.803, Anatomical=2.112, Total=2.186
+    Batch 30 - Loss components: Cls=0.097, CAM=0.720, Tversky=0.782, Anatomical=2.399, Total=2.213
+  Train Loss: 2.2053, Train Acc: 0.522
+
+Epoch 20/40
+    Batch 10 - Loss components: Cls=0.129, CAM=0.753, Tversky=0.784, Anatomical=2.477, Total=2.267
+    Batch 20 - Loss components: Cls=0.087, CAM=0.734, Tversky=0.784, Anatomical=2.320, Total=2.192
+    Batch 30 - Loss components: Cls=0.090, CAM=0.721, Tversky=0.800, Anatomical=2.701, Total=2.303
+  Train Loss: 2.2338, Train Acc: 0.526
+
+Epoch 21/40
+    Batch 10 - Loss components: Cls=0.113, CAM=0.726, Tversky=0.788, Anatomical=2.126, Total=2.186
+    Batch 20 - Loss components: Cls=0.083, CAM=0.713, Tversky=0.764, Anatomical=1.592, Total=2.000
+    Batch 30 - Loss components: Cls=0.094, CAM=0.746, Tversky=0.799, Anatomical=2.267, Total=2.220
+  Train Loss: 2.2156, Train Acc: 0.565
+  Val Loss: 2.2627, Val Acc: 0.664, Val IoU: 0.208, Val Dice: 0.313
+  Val CM [TN FP; FN TP] = [71 49; 30 85]
+  ✓ Validation accuracy improved!
+
+Epoch 22/40
+    Batch 10 - Loss components: Cls=0.087, CAM=0.723, Tversky=0.786, Anatomical=2.673, Total=2.266
+    Batch 20 - Loss components: Cls=0.107, CAM=0.734, Tversky=0.784, Anatomical=2.206, Total=2.190
+    Batch 30 - Loss components: Cls=0.086, CAM=0.740, Tversky=0.748, Anatomical=2.221, Total=2.099
+  Train Loss: 2.2076, Train Acc: 0.561
+
+Epoch 23/40
+    Batch 10 - Loss components: Cls=0.095, CAM=0.711, Tversky=0.773, Anatomical=2.612, Total=2.236
+    Batch 20 - Loss components: Cls=0.095, CAM=0.721, Tversky=0.766, Anatomical=1.941, Total=2.086
+    Batch 30 - Loss components: Cls=0.083, CAM=0.710, Tversky=0.777, Anatomical=2.828, Total=2.273
+  Train Loss: 2.1998, Train Acc: 0.567
+
+Epoch 24/40
+    Batch 10 - Loss components: Cls=0.089, CAM=0.779, Tversky=0.776, Anatomical=2.408, Total=2.200
+    Batch 20 - Loss components: Cls=0.086, CAM=0.744, Tversky=0.789, Anatomical=2.432, Total=2.224
+    Batch 30 - Loss components: Cls=0.091, CAM=0.719, Tversky=0.776, Anatomical=2.486, Total=2.211
+  Train Loss: 2.2152, Train Acc: 0.591
+  Val Loss: 2.2360, Val Acc: 0.579, Val IoU: 0.149, Val Dice: 0.246
+  Val CM [TN FP; FN TP] = [28 92; 7 108]
+
+Epoch 25/40
+    Batch 10 - Loss components: Cls=0.091, CAM=0.713, Tversky=0.794, Anatomical=2.278, Total=2.205
+    Batch 20 - Loss components: Cls=0.096, CAM=0.726, Tversky=0.806, Anatomical=2.716, Total=2.324
+    Batch 30 - Loss components: Cls=0.097, CAM=0.736, Tversky=0.804, Anatomical=2.274, Total=2.233
+  Train Loss: 2.2002, Train Acc: 0.548
+
+Epoch 26/40
+    Batch 10 - Loss components: Cls=0.084, CAM=0.749, Tversky=0.778, Anatomical=2.448, Total=2.205
+    Batch 20 - Loss components: Cls=0.113, CAM=0.706, Tversky=0.792, Anatomical=2.918, Total=2.351
+    Batch 30 - Loss components: Cls=0.077, CAM=0.707, Tversky=0.752, Anatomical=2.510, Total=2.154
+  Train Loss: 2.1948, Train Acc: 0.608
+
+Epoch 27/40
+    Batch 10 - Loss components: Cls=0.072, CAM=0.777, Tversky=0.800, Anatomical=2.664, Total=2.282
+    Batch 20 - Loss components: Cls=0.074, CAM=0.746, Tversky=0.772, Anatomical=2.036, Total=2.100
+    Batch 30 - Loss components: Cls=0.086, CAM=0.698, Tversky=0.731, Anatomical=1.374, Total=1.892
+  Train Loss: 2.1899, Train Acc: 0.602
+  Val Loss: 2.2503, Val Acc: 0.660, Val IoU: 0.219, Val Dice: 0.328
+  Val CM [TN FP; FN TP] = [63 57; 23 92]
+
+Epoch 28/40
+    Batch 10 - Loss components: Cls=0.060, CAM=0.682, Tversky=0.771, Anatomical=2.107, Total=2.091
+    Batch 20 - Loss components: Cls=0.066, CAM=0.772, Tversky=0.791, Anatomical=2.594, Total=2.244
+    Batch 30 - Loss components: Cls=0.093, CAM=0.725, Tversky=0.787, Anatomical=2.672, Total=2.274
+  Train Loss: 2.1834, Train Acc: 0.591
+
+Epoch 29/40
+    Batch 10 - Loss components: Cls=0.085, CAM=0.737, Tversky=0.773, Anatomical=2.019, Total=2.108
+    Batch 20 - Loss components: Cls=0.074, CAM=0.738, Tversky=0.794, Anatomical=2.345, Total=2.204
+    Batch 30 - Loss components: Cls=0.081, CAM=0.754, Tversky=0.773, Anatomical=2.293, Total=2.160
+  Train Loss: 2.2156, Train Acc: 0.574
+
+Epoch 30/40
+    Batch 10 - Loss components: Cls=0.086, CAM=0.778, Tversky=0.823, Anatomical=3.097, Total=2.430
+    Batch 20 - Loss components: Cls=0.072, CAM=0.767, Tversky=0.809, Anatomical=2.932, Total=2.353
+    Batch 30 - Loss components: Cls=0.083, CAM=0.702, Tversky=0.766, Anatomical=2.153, Total=2.115
+  Train Loss: 2.2182, Train Acc: 0.591
+  Val Loss: 2.1899, Val Acc: 0.651, Val IoU: 0.200, Val Dice: 0.309
+  Val CM [TN FP; FN TP] = [59 61; 21 94]
+
+Epoch 31/40
+    Batch 10 - Loss components: Cls=0.082, CAM=0.698, Tversky=0.809, Anatomical=2.899, Total=2.350
+    Batch 20 - Loss components: Cls=0.074, CAM=0.759, Tversky=0.772, Anatomical=2.501, Total=2.195
+    Batch 30 - Loss components: Cls=0.066, CAM=0.717, Tversky=0.805, Anatomical=2.847, Total=2.317
+  Train Loss: 2.2246, Train Acc: 0.613
+
+Epoch 32/40
+    Batch 10 - Loss components: Cls=0.084, CAM=0.729, Tversky=0.778, Anatomical=1.801, Total=2.074
+    Batch 20 - Loss components: Cls=0.056, CAM=0.758, Tversky=0.785, Anatomical=2.519, Total=2.206
+    Batch 30 - Loss components: Cls=0.079, CAM=0.729, Tversky=0.775, Anatomical=2.027, Total=2.107
+  Train Loss: 2.2280, Train Acc: 0.606
+
+Epoch 33/40
+    Batch 10 - Loss components: Cls=0.094, CAM=0.748, Tversky=0.759, Anatomical=1.815, Total=2.051
+    Batch 20 - Loss components: Cls=0.056, CAM=0.755, Tversky=0.812, Anatomical=3.167, Total=2.390
+    Batch 30 - Loss components: Cls=0.079, CAM=0.729, Tversky=0.795, Anatomical=3.087, Total=2.358
+  Train Loss: 2.2331, Train Acc: 0.632
+  Val Loss: 2.2420, Val Acc: 0.651, Val IoU: 0.191, Val Dice: 0.306
+  Val CM [TN FP; FN TP] = [63 57; 25 90]
+
+Epoch 34/40
+    Batch 10 - Loss components: Cls=0.109, CAM=0.735, Tversky=0.765, Anatomical=1.831, Total=2.079
+    Batch 20 - Loss components: Cls=0.078, CAM=0.730, Tversky=0.756, Anatomical=1.650, Total=1.994
+    Batch 30 - Loss components: Cls=0.097, CAM=0.759, Tversky=0.791, Anatomical=2.561, Total=2.267
+  Train Loss: 2.1871, Train Acc: 0.613
+
+Epoch 35/40
+    Batch 10 - Loss components: Cls=0.101, CAM=0.700, Tversky=0.762, Anatomical=1.828, Total=2.060
+    Batch 20 - Loss components: Cls=0.093, CAM=0.734, Tversky=0.763, Anatomical=2.506, Total=2.195
+    Batch 30 - Loss components: Cls=0.068, CAM=0.734, Tversky=0.781, Anatomical=2.363, Total=2.176
+  Train Loss: 2.2297, Train Acc: 0.584
+
+Epoch 36/40
+    Batch 10 - Loss components: Cls=0.090, CAM=0.721, Tversky=0.845, Anatomical=3.462, Total=2.544
+    Batch 20 - Loss components: Cls=0.092, CAM=0.776, Tversky=0.810, Anatomical=2.274, Total=2.244
+    Batch 30 - Loss components: Cls=0.090, CAM=0.778, Tversky=0.775, Anatomical=2.029, Total=2.123
+  Train Loss: 2.2336, Train Acc: 0.617
+  Val Loss: 2.3764, Val Acc: 0.604, Val IoU: 0.176, Val Dice: 0.282
+  Val CM [TN FP; FN TP] = [32 88; 5 110]
+
+Epoch 37/40
+    Batch 10 - Loss components: Cls=0.095, CAM=0.698, Tversky=0.801, Anatomical=3.155, Total=2.397
+    Batch 20 - Loss components: Cls=0.080, CAM=0.726, Tversky=0.793, Anatomical=2.512, Total=2.241
+    Batch 30 - Loss components: Cls=0.065, CAM=0.680, Tversky=0.782, Anatomical=2.473, Total=2.192
+  Train Loss: 2.2283, Train Acc: 0.626
+
+Epoch 38/40
+    Batch 10 - Loss components: Cls=0.085, CAM=0.703, Tversky=0.788, Anatomical=2.510, Total=2.233
+    Batch 20 - Loss components: Cls=0.085, CAM=0.756, Tversky=0.803, Anatomical=3.040, Total=2.376
+    Batch 30 - Loss components: Cls=0.072, CAM=0.702, Tversky=0.767, Anatomical=1.571, Total=1.991
+  Train Loss: 2.2382, Train Acc: 0.621
+
+Epoch 39/40
+    Batch 10 - Loss components: Cls=0.064, CAM=0.715, Tversky=0.771, Anatomical=2.435, Total=2.164
+    Batch 20 - Loss components: Cls=0.082, CAM=0.689, Tversky=0.766, Anatomical=2.111, Total=2.104
+    Batch 30 - Loss components: Cls=0.096, CAM=0.708, Tversky=0.780, Anatomical=2.847, Total=2.296
+  Train Loss: 2.2288, Train Acc: 0.615
+  Val Loss: 2.3017, Val Acc: 0.668, Val IoU: 0.214, Val Dice: 0.333
+  Val CM [TN FP; FN TP] = [55 65; 13 102]
+
+Epoch 40/40
+    Batch 10 - Loss components: Cls=0.076, CAM=0.779, Tversky=0.792, Anatomical=2.946, Total=2.326
+    Batch 20 - Loss components: Cls=0.076, CAM=0.755, Tversky=0.789, Anatomical=2.715, Total=2.273
+    Batch 30 - Loss components: Cls=0.075, CAM=0.753, Tversky=0.808, Anatomical=3.139, Total=2.394
+  Train Loss: 2.2172, Train Acc: 0.658
+  Evaluating fold 2...
+  Fold 2 Results: Acc=0.664, Dice=0.301, IoU=0.195
+  ✓ Checkpoint saved: models\checkpoints\checkpoint_none_fold_2_improved.mat
+
+--- Fold 3/3 ---
+  Train: 470 samples, Val: 234 samples
+Starting training with enhanced stability...
+
+Epoch 1/40
+    Batch 10 - Loss components: Cls=0.304, CAM=0.745, Tversky=0.752, Anatomical=2.006, Total=2.283
+    Batch 20 - Loss components: Cls=0.290, CAM=0.723, Tversky=0.742, Anatomical=1.424, Total=2.132
+    Batch 30 - Loss components: Cls=0.105, CAM=0.656, Tversky=0.747, Anatomical=1.769, Total=2.018
+  Train Loss: 2.1161, Train Acc: 0.511
+  Val Loss: 2.1259, Val Acc: 0.491, Val IoU: 0.225, Val Dice: 0.342
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+  ✓ Validation accuracy improved!
+
+Epoch 2/40
+    Batch 10 - Loss components: Cls=0.140, CAM=0.717, Tversky=0.753, Anatomical=1.851, Total=2.087
+    Batch 20 - Loss components: Cls=0.257, CAM=0.707, Tversky=0.749, Anatomical=1.638, Total=2.154
+    Batch 30 - Loss components: Cls=0.179, CAM=0.661, Tversky=0.736, Anatomical=1.477, Total=2.012
+  Train Loss: 2.0329, Train Acc: 0.489
+
+Epoch 3/40
+    Batch 10 - Loss components: Cls=0.202, CAM=0.679, Tversky=0.746, Anatomical=1.714, Total=2.104
+    Batch 20 - Loss components: Cls=0.148, CAM=0.697, Tversky=0.727, Anatomical=1.350, Total=1.942
+    Batch 30 - Loss components: Cls=0.110, CAM=0.699, Tversky=0.750, Anatomical=1.513, Total=1.982
+  Train Loss: 1.9787, Train Acc: 0.491
+  Val Loss: 1.9321, Val Acc: 0.491, Val IoU: 0.123, Val Dice: 0.194
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+
+Epoch 4/40
+    Batch 10 - Loss components: Cls=0.109, CAM=0.719, Tversky=0.731, Anatomical=1.503, Total=1.945
+    Batch 20 - Loss components: Cls=0.170, CAM=0.685, Tversky=0.765, Anatomical=2.329, Total=2.235
+    Batch 30 - Loss components: Cls=0.075, CAM=0.707, Tversky=0.781, Anatomical=2.162, Total=2.141
+  Train Loss: 1.9582, Train Acc: 0.504
+
+Epoch 5/40
+    Batch 10 - Loss components: Cls=0.224, CAM=0.706, Tversky=0.732, Anatomical=1.470, Total=2.053
+    Batch 20 - Loss components: Cls=0.098, CAM=0.720, Tversky=0.753, Anatomical=1.892, Total=2.054
+    Batch 30 - Loss components: Cls=0.079, CAM=0.687, Tversky=0.749, Anatomical=1.551, Total=1.955
+  Train Loss: 1.9742, Train Acc: 0.483
+
+Epoch 6/40
+    Batch 10 - Loss components: Cls=0.154, CAM=0.740, Tversky=0.695, Anatomical=1.007, Total=1.820
+    Batch 20 - Loss components: Cls=0.127, CAM=0.749, Tversky=0.755, Anatomical=1.658, Total=2.044
+    Batch 30 - Loss components: Cls=0.119, CAM=0.668, Tversky=0.778, Anatomical=2.000, Total=2.141
+  Train Loss: 1.9716, Train Acc: 0.502
+  Val Loss: 1.8692, Val Acc: 0.491, Val IoU: 0.043, Val Dice: 0.077
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+
+Epoch 7/40
+    Batch 10 - Loss components: Cls=0.106, CAM=0.642, Tversky=0.714, Anatomical=1.072, Total=1.813
+    Batch 20 - Loss components: Cls=0.117, CAM=0.662, Tversky=0.755, Anatomical=1.937, Total=2.080
+    Batch 30 - Loss components: Cls=0.095, CAM=0.686, Tversky=0.751, Anatomical=1.915, Total=2.048
+  Train Loss: 1.9518, Train Acc: 0.496
+
+Epoch 8/40
+    Batch 10 - Loss components: Cls=0.075, CAM=0.632, Tversky=0.711, Anatomical=1.183, Total=1.796
+    Batch 20 - Loss components: Cls=0.101, CAM=0.727, Tversky=0.753, Anatomical=1.943, Total=2.068
+    Batch 30 - Loss components: Cls=0.105, CAM=0.711, Tversky=0.744, Anatomical=1.462, Total=1.957
+  Train Loss: 1.9697, Train Acc: 0.496
+
+Epoch 9/40
+    Batch 10 - Loss components: Cls=0.162, CAM=0.672, Tversky=0.727, Anatomical=1.471, Total=1.977
+    Batch 20 - Loss components: Cls=0.128, CAM=0.711, Tversky=0.773, Anatomical=2.313, Total=2.208
+    Batch 30 - Loss components: Cls=0.092, CAM=0.689, Tversky=0.743, Anatomical=1.481, Total=1.944
+  Train Loss: 1.9560, Train Acc: 0.483
+  Val Loss: 1.9140, Val Acc: 0.509, Val IoU: 0.047, Val Dice: 0.081
+  Val CM [TN FP; FN TP] = [119 0; 115 0]
+  ✓ Validation accuracy improved!
+
+Epoch 10/40
+    Batch 10 - Loss components: Cls=0.137, CAM=0.748, Tversky=0.745, Anatomical=0.976, Total=1.897
+    Batch 20 - Loss components: Cls=0.174, CAM=0.725, Tversky=0.782, Anatomical=1.895, Total=2.189
+    Batch 30 - Loss components: Cls=0.074, CAM=0.690, Tversky=0.746, Anatomical=1.798, Total=1.996
+  Train Loss: 1.9508, Train Acc: 0.528
+
+Epoch 11/40
+    Batch 10 - Loss components: Cls=0.096, CAM=0.758, Tversky=0.738, Anatomical=1.648, Total=1.977
+    Batch 20 - Loss components: Cls=0.117, CAM=0.699, Tversky=0.754, Anatomical=1.320, Total=1.959
+    Batch 30 - Loss components: Cls=0.070, CAM=0.720, Tversky=0.757, Anatomical=1.823, Total=2.021
+  Train Loss: 1.9120, Train Acc: 0.498
+
+Epoch 12/40
+    Batch 10 - Loss components: Cls=0.107, CAM=0.719, Tversky=0.755, Anatomical=1.829, Total=2.056
+    Batch 20 - Loss components: Cls=0.125, CAM=0.671, Tversky=0.707, Anatomical=1.266, Total=1.860
+    Batch 30 - Loss components: Cls=0.102, CAM=0.692, Tversky=0.742, Anatomical=1.975, Total=2.051
+  Train Loss: 1.9620, Train Acc: 0.463
+  Val Loss: 1.9331, Val Acc: 0.491, Val IoU: 0.082, Val Dice: 0.133
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+
+Epoch 13/40
+    Batch 10 - Loss components: Cls=0.082, CAM=0.701, Tversky=0.748, Anatomical=1.345, Total=1.917
+    Batch 20 - Loss components: Cls=0.095, CAM=0.672, Tversky=0.728, Anatomical=1.086, Total=1.834
+    Batch 30 - Loss components: Cls=0.126, CAM=0.733, Tversky=0.749, Anatomical=1.479, Total=1.994
+  Train Loss: 1.9468, Train Acc: 0.494
+
+Epoch 14/40
+    Batch 10 - Loss components: Cls=0.092, CAM=0.739, Tversky=0.731, Anatomical=1.355, Total=1.899
+    Batch 20 - Loss components: Cls=0.095, CAM=0.755, Tversky=0.746, Anatomical=1.728, Total=2.010
+    Batch 30 - Loss components: Cls=0.084, CAM=0.621, Tversky=0.720, Anatomical=0.800, Total=1.746
+  Train Loss: 1.9126, Train Acc: 0.491
+
+Epoch 15/40
+    Batch 10 - Loss components: Cls=0.075, CAM=0.647, Tversky=0.739, Anatomical=1.312, Total=1.880
+    Batch 20 - Loss components: Cls=0.131, CAM=0.739, Tversky=0.759, Anatomical=1.908, Total=2.104
+    Batch 30 - Loss components: Cls=0.099, CAM=0.662, Tversky=0.699, Anatomical=1.879, Total=1.939
+  Train Loss: 1.9018, Train Acc: 0.489
+  Val Loss: 1.9276, Val Acc: 0.491, Val IoU: 0.070, Val Dice: 0.116
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+
+Epoch 16/40
+    Batch 10 - Loss components: Cls=0.110, CAM=0.697, Tversky=0.735, Anatomical=1.251, Total=1.900
+    Batch 20 - Loss components: Cls=0.106, CAM=0.657, Tversky=0.724, Anatomical=1.266, Total=1.874
+    Batch 30 - Loss components: Cls=0.123, CAM=0.680, Tversky=0.737, Anatomical=1.121, Total=1.889
+  Train Loss: 1.9409, Train Acc: 0.476
+
+Epoch 17/40
+    Batch 10 - Loss components: Cls=0.086, CAM=0.695, Tversky=0.735, Anatomical=1.539, Total=1.933
+    Batch 20 - Loss components: Cls=0.080, CAM=0.711, Tversky=0.730, Anatomical=1.315, Total=1.874
+    Batch 30 - Loss components: Cls=0.089, CAM=0.701, Tversky=0.732, Anatomical=1.664, Total=1.955
+  Train Loss: 1.9028, Train Acc: 0.463
+
+Epoch 18/40
+    Batch 10 - Loss components: Cls=0.094, CAM=0.682, Tversky=0.702, Anatomical=1.087, Total=1.784
+    Batch 20 - Loss components: Cls=0.102, CAM=0.669, Tversky=0.699, Anatomical=0.811, Total=1.729
+    Batch 30 - Loss components: Cls=0.087, CAM=0.674, Tversky=0.671, Anatomical=0.750, Total=1.648
+  Train Loss: 1.8726, Train Acc: 0.519
+  Val Loss: 1.8387, Val Acc: 0.509, Val IoU: 0.080, Val Dice: 0.135
+  Val CM [TN FP; FN TP] = [119 0; 115 0]
+
+Epoch 19/40
+    Batch 10 - Loss components: Cls=0.099, CAM=0.730, Tversky=0.709, Anatomical=0.714, Total=1.734
+    Batch 20 - Loss components: Cls=0.101, CAM=0.705, Tversky=0.745, Anatomical=1.387, Total=1.938
+    Batch 30 - Loss components: Cls=0.111, CAM=0.700, Tversky=0.708, Anatomical=0.771, Total=1.752
+  Train Loss: 1.9230, Train Acc: 0.487
+
+Epoch 20/40
+    Batch 10 - Loss components: Cls=0.085, CAM=0.641, Tversky=0.708, Anatomical=0.714, Total=1.708
+    Batch 20 - Loss components: Cls=0.091, CAM=0.727, Tversky=0.709, Anatomical=1.011, Total=1.783
+    Batch 30 - Loss components: Cls=0.079, CAM=0.699, Tversky=0.720, Anatomical=1.742, Total=1.937
+  Train Loss: 1.8611, Train Acc: 0.489
+
+Epoch 21/40
+    Batch 10 - Loss components: Cls=0.097, CAM=0.713, Tversky=0.691, Anatomical=0.844, Total=1.719
+    Batch 20 - Loss components: Cls=0.100, CAM=0.714, Tversky=0.747, Anatomical=1.567, Total=1.979
+    Batch 30 - Loss components: Cls=0.076, CAM=0.677, Tversky=0.753, Anatomical=1.223, Total=1.895
+  Train Loss: 1.8575, Train Acc: 0.494
+  Val Loss: 1.8754, Val Acc: 0.491, Val IoU: 0.085, Val Dice: 0.140
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+
+Epoch 22/40
+    Batch 10 - Loss components: Cls=0.097, CAM=0.667, Tversky=0.713, Anatomical=1.191, Total=1.827
+    Batch 20 - Loss components: Cls=0.093, CAM=0.692, Tversky=0.697, Anatomical=0.978, Total=1.752
+    Batch 30 - Loss components: Cls=0.108, CAM=0.687, Tversky=0.739, Anatomical=1.533, Total=1.961
+  Train Loss: 1.8740, Train Acc: 0.485
+
+Epoch 23/40
+    Batch 10 - Loss components: Cls=0.090, CAM=0.704, Tversky=0.752, Anatomical=1.753, Total=2.015
+    Batch 20 - Loss components: Cls=0.075, CAM=0.672, Tversky=0.676, Anatomical=0.762, Total=1.647
+    Batch 30 - Loss components: Cls=0.096, CAM=0.667, Tversky=0.728, Anatomical=1.052, Total=1.829
+  Train Loss: 1.8382, Train Acc: 0.496
+
+Epoch 24/40
+    Batch 10 - Loss components: Cls=0.088, CAM=0.672, Tversky=0.728, Anatomical=1.345, Total=1.881
+    Batch 20 - Loss components: Cls=0.070, CAM=0.672, Tversky=0.735, Anatomical=1.385, Total=1.884
+    Batch 30 - Loss components: Cls=0.082, CAM=0.719, Tversky=0.755, Anatomical=1.710, Total=2.005
+  Train Loss: 1.8935, Train Acc: 0.489
+  Val Loss: 1.9251, Val Acc: 0.491, Val IoU: 0.083, Val Dice: 0.140
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+
+Epoch 25/40
+    Batch 10 - Loss components: Cls=0.089, CAM=0.678, Tversky=0.726, Anatomical=1.226, Total=1.854
+    Batch 20 - Loss components: Cls=0.104, CAM=0.678, Tversky=0.729, Anatomical=1.631, Total=1.956
+    Batch 30 - Loss components: Cls=0.103, CAM=0.692, Tversky=0.717, Anatomical=1.458, Total=1.898
+  Train Loss: 1.8839, Train Acc: 0.483
+
+Epoch 26/40
+    Batch 10 - Loss components: Cls=0.098, CAM=0.730, Tversky=0.713, Anatomical=1.260, Total=1.849
+    Batch 20 - Loss components: Cls=0.094, CAM=0.690, Tversky=0.745, Anatomical=1.237, Total=1.901
+    Batch 30 - Loss components: Cls=0.090, CAM=0.667, Tversky=0.718, Anatomical=1.259, Total=1.844
+  Train Loss: 1.8892, Train Acc: 0.509
+
+Epoch 27/40
+    Batch 10 - Loss components: Cls=0.085, CAM=0.691, Tversky=0.741, Anatomical=1.396, Total=1.915
+    Batch 20 - Loss components: Cls=0.092, CAM=0.695, Tversky=0.724, Anatomical=1.389, Total=1.888
+    Batch 30 - Loss components: Cls=0.077, CAM=0.715, Tversky=0.746, Anatomical=1.492, Total=1.939
+  Train Loss: 1.8812, Train Acc: 0.494
+  Val Loss: 1.8322, Val Acc: 0.491, Val IoU: 0.076, Val Dice: 0.132
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+
+Epoch 28/40
+    Batch 10 - Loss components: Cls=0.096, CAM=0.649, Tversky=0.746, Anatomical=1.234, Total=1.900
+    Batch 20 - Loss components: Cls=0.093, CAM=0.714, Tversky=0.755, Anatomical=1.754, Total=2.026
+    Batch 30 - Loss components: Cls=0.085, CAM=0.666, Tversky=0.752, Anatomical=1.775, Total=2.011
+  Train Loss: 1.8831, Train Acc: 0.487
+
+Epoch 29/40
+    Batch 10 - Loss components: Cls=0.098, CAM=0.697, Tversky=0.728, Anatomical=1.560, Total=1.935
+    Batch 20 - Loss components: Cls=0.091, CAM=0.704, Tversky=0.732, Anatomical=1.466, Total=1.918
+    Batch 30 - Loss components: Cls=0.106, CAM=0.701, Tversky=0.758, Anatomical=1.517, Total=1.996
+  Train Loss: 1.8753, Train Acc: 0.491
+
+Epoch 30/40
+    Batch 10 - Loss components: Cls=0.099, CAM=0.744, Tversky=0.716, Anatomical=1.830, Total=1.971
+    Batch 20 - Loss components: Cls=0.083, CAM=0.704, Tversky=0.710, Anatomical=1.347, Total=1.842
+    Batch 30 - Loss components: Cls=0.088, CAM=0.711, Tversky=0.706, Anatomical=0.619, Total=1.695
+  Train Loss: 1.8730, Train Acc: 0.491
+  Val Loss: 1.8390, Val Acc: 0.491, Val IoU: 0.075, Val Dice: 0.128
+  Val CM [TN FP; FN TP] = [0 119; 0 115]
+
+Early stopping triggered (patience: 7)
+  Evaluating fold 3...
+  Fold 3 Results: Acc=0.509, Dice=0.088, IoU=0.052
+  ✓ Checkpoint saved: models\checkpoints\checkpoint_none_fold_3_improved.mat
+
+=== All folds completed ===
+
+=== COMPUTING CROSS-VALIDATION RESULTS ===
+
+Cross-Validation Results (Mean ± Std across 3 folds):
+  Accuracy: 0.615 ± 0.092
+  Precision: 0.422 ± 0.366
+  Sensitivity: 0.510 ± 0.443
+  Specificity: 0.717 ± 0.246
+  F1-Score: 0.462 ± 0.400
+  AUC: 0.639 ± 0.115
+  IoU: 0.145 ± 0.081
+  Dice: 0.231 ± 0.124
+  Tversky: 0.269 ± 0.143
+
+Best model: fold_1 (Accuracy: 0.672)
+
+=== SAVING MODEL AND RESULTS ===
+Saving to: models\final\final_model_none_kfold_improved.mat
+Model and results saved successfully!
+
+=== GENERATING TRAINING CURVES ===
+  Saved: models\final\kfold_training_curves.png
+
+=== MULTI-CASE EVALUATION ===
+Evaluating best model across ROI and Full-CXR usage modes...
+  Found CXR directory: C:\numan\input\cxr
+  CXR dataset loaded: 704 samples
+
+  Running evaluation suite...
+  Tuned PTB threshold on ROI-val (mode=constrained): 0.520
+  Thresholds: balanced=0.480, constrained=0.520 (sens floor=0.65)
+  Temperature calibration: T=0.80
+
+  Case: ROI validation (ID)
+    Accuracy: 0.664
+    Precision: 0.638
+    Sensitivity: 0.722
+    Specificity: 0.608
+    F1-Score: 0.678
+    AUC: 0.704
+    PTB prob mean/median: 0.515 / 0.535
+    % above threshold: 55.3%
+    Mean uncertainty: 0.931
+
+  Case: Full CXR raw
+    Accuracy: 0.490
+    Precision: 0.490
+    Sensitivity: 1.000
+    Specificity: 0.000
+    F1-Score: 0.658
+    AUC: 0.635
+    PTB prob mean/median: 0.648 / 0.650
+    % above threshold: 100.0%
+    Mean uncertainty: 0.819
+
+  Case: Full CXR with ROI extraction
+    Accuracy: 0.570
+    Precision: 0.550
+    Sensitivity: 0.672
+    Specificity: 0.471
+    F1-Score: 0.605
+    AUC: 0.644
+    PTB prob mean/median: 0.648 / 0.648
+    % above threshold: 100.0%
+    Mean uncertainty: 0.820
+    Conservative overrides: 282
+
+  Case: Full CXR dual-view
+    Accuracy: 0.595
+    Precision: 0.571
+    Sensitivity: 0.699
+    Specificity: 0.496
+    F1-Score: 0.628
+    AUC: 0.679
+    PTB prob mean/median: 0.648 / 0.649
+    % above threshold: 100.0%
+    Mean uncertainty: 0.820
+    Conservative overrides: 282
+
+  Degradation vs ROI-val for Full CXR raw:
+    Accuracy: 26.18%
+    Precision: 23.24%
+    Sensitivity: -38.55%
+    Specificity: 100.00%
+    F1-Score: 2.92%
+    AUC: 9.73%
+    Mean Degradation: 20.59%
+
+  Degradation vs ROI-val for Full CXR with ROI extraction:
+    Accuracy: 14.19%
+    Precision: 13.89%
+    Sensitivity: 6.83%
+    Specificity: 22.62%
+    F1-Score: 10.71%
+    AUC: 8.44%
+    Mean Degradation: 12.78%
+
+  Degradation vs ROI-val for Full CXR dual-view:
+    Accuracy: 10.34%
+    Precision: 10.55%
+    Sensitivity: 3.21%
+    Specificity: 18.50%
+    F1-Score: 7.25%
+    AUC: 3.52%
+    Mean Degradation: 8.90%
+
+  Multi-case evaluation results saved to model file.
+
+=== K-FOLD CROSS-VALIDATION COMPLETE ===
+Final model saved to: models\final\final_model_none_kfold_improved.mat
+Training curves saved to: models\final
+
+Summary:
+  Preprocessing: none
+  Best Fold: fold_1
+  Mean Accuracy: 0.615 ± 0.092
+  Mean Dice: 0.231 ± 0.124
+  CXR-ROI Mean Degradation: 12.78%
+
+=== IMPROVEMENTS APPLIED ===
+  ✓ Cosine similarity for GradCAM loss (scale-invariant)
+  ✓ Anatomical loss positivity constraint (stable optimization)
+  ✓ Adaptive loss scaling (epoch-dependent)
+  ✓ Gradient clipping + LR warmup + cosine annealing
+  ✓ Preprocessing ensemble for OOD robustness
+  ✓ Uncertainty estimation for clinical safety
+>> 

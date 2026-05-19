@@ -38,7 +38,7 @@ config = struct();
 config.debug_baseline_mode = false;  % true: force CE-only + no class weights + no histmatch
 config.enable_ablation = false;      % true: run 4-way ablation (none/histmatch x no-weights/weights)
 config.fast_dev_mode = false;         % true: fast concept-validation mode
-config.teacher_model_spec = 'mixed';    % 'roi', 'cxr', 'mixed', or full .mat path
+config.teacher_model_spec = 'roi';    % 'roi', 'cxr', 'mixed', or full .mat path
 config.evaluation_cases = {'roi_val', 'cxr_raw', 'cxr_roi', 'cxr_dual'};
 
 % QUICK TEST MODE: Set to true for quick validation (3 folds, 5 epochs)
@@ -75,7 +75,7 @@ config.min_lr_ratio = 0.1;          % Minimum LR for cosine annealing
 
 % Optimal hyperparameters (v2.3 - OPTIMIZED PTB BIAS)
 % Loss weights (safer defaults)
-config.lambda_cam = 8;            % Weight for GradCAM loss (reduced from 10.0)
+config.lambda_cam = 2;            % Weight for GradCAM loss (reduced from 10.0)
 config.lambda_tversky = 5;        % Weight for Tversky loss
 config.tversky_alpha = 0.7;
 config.tversky_beta = 0.3;
@@ -1700,6 +1700,34 @@ end
     else, error('Could not find network variable in %s', modelPath);
     end
 
+    % Convert to dlnetwork — forward() and dlgradient() require dlnetwork.
+    % Teacher .mat files saved from trainNetwork() are DAGNetwork.
+    if isa(vggNet, 'DAGNetwork') || isa(vggNet, 'SeriesNetwork')
+        fprintf('  Converting %s to dlnetwork...\n', class(vggNet));
+        try
+            vggNet = dag2dlnetwork(vggNet);
+        catch
+            lg = layerGraph(vggNet);
+            for oi = 1:numel({'output','classoutput','ClassificationLayer_predictions'})
+                nm = {'output','classoutput','ClassificationLayer_predictions'};
+                if any(strcmp({lg.Layers.Name}, nm{oi}))
+                    try, lg = removeLayers(lg, nm{oi}); catch, end
+                end
+            end
+            vggNet = dlnetwork(lg);
+        end
+        fprintf('  Conversion complete: %s\n', class(vggNet));
+    elseif ~isa(vggNet, 'dlnetwork')
+        try
+            vggNet = dlnetwork(layerGraph(vggNet));
+            fprintf('  Converted to dlnetwork\n');
+        catch ME
+            error('Cannot convert teacher network: %s', ME.message);
+        end
+    else
+        fprintf('  Teacher is already dlnetwork\n');
+    end
+
     % 2. Student always trains on ROI — imds and classes always from roi dir
     roiDir = fullfile('input', 'roi');
     imds   = imageDatastore(roiDir, 'IncludeSubfolders', true, 'LabelSource', 'foldernames');
@@ -2211,52 +2239,78 @@ function dist = improved_hausdorff_distance(pred, target)
 end
 
 function cam = student_cam_one(net, img, classes, featureLayer, useGPU)
-    dlX = dlarray(single(img) ./ 255, 'SSCB');
-    if useGPU, dlX = gpuArray(dlX); end
+% Robust GradCAM for both dlnetwork and DAGNetwork
+% Called via dlfeval in precomputation and loss
 
-    % Auto-discover output layer name (fc8 may be renamed after conversion)
-    layerNames = {net.Layers.Name};
-    fcIdx = find(cellfun(@(n) isa(net.Layers(strcmp(layerNames,n)),...
-        'nnet.cnn.layer.FullyConnectedLayer'), layerNames));
-    if ~isempty(fcIdx)
-        outputName = layerNames{fcIdx(end)};
+    if ~isa(img, 'dlarray')
+        dlX = dlarray(single(img) ./ 255, 'SSCB');
     else
-        % Fall back: last layer before softmax/output
-        outputName = layerNames{end-1};
+        dlX = img;
+    end
+    if useGPU
+        dlX = gpuArray(dlX);
     end
 
-    % Auto-discover feature layer (relu5_3 may be renamed)
+    layerNames = {net.Layers.Name};
+
+    % 1. Feature Layer (relu5_3 preferred)
     if ~any(strcmp(layerNames, featureLayer))
-        % Find last relu layer as fallback
-        reluIdx = find(cellfun(@(n) contains(lower(n),'relu'), layerNames));
+        reluIdx = find(contains(lower(layerNames), 'relu'), 1, 'last');
         if ~isempty(reluIdx)
-            featureLayer = layerNames{reluIdx(end)};
-            persistent warnedLayer;
-            if isempty(warnedLayer)
-                fprintf('    ⚠ featureLayer "%s" not found, using "%s"\n', ...
-                    featureLayer, layerNames{reluIdx(end)});
-                warnedLayer = true;
-            end
+            featureLayer = layerNames{reluIdx};
+            fprintf('    [GradCAM] Using fallback feature layer: %s\n', featureLayer);
         end
     end
 
-    [featMap, logits] = forward(net, dlX, 'Outputs', {featureLayer, outputName});
-    logits = squeeze(logits);
-    [~, classIdx] = max(extractdata(logits));
-    score    = sum(logits(classIdx), 'all');
-    gradFeat = dlgradient(score, featMap);
-    w        = mean(gradFeat, [1 2]);
-    cam      = sum(featMap .* w, 3);
-    cam      = max(cam, 0);
-    cam      = extractdata(cam);
-    cam      = imresize(cam, [224 224]);
-    maxVal   = max(cam(:));
-    if maxVal > 1e-6
-        cam = single(cam ./ maxVal);
-    else
-        cam = 0.5 * ones(224, 224, 'single');  % flag as failed
+    % 2. Output Layer - MUST be pre-softmax FC layer (fc8)
+    fcCandidates = {'fc8', 'fc', 'predictions', 'classifier', 'output_fc'};
+    outputName = '';
+    for k = 1:length(fcCandidates)
+        if any(strcmp(layerNames, fcCandidates{k}))
+            outputName = fcCandidates{k};
+            break;
+        end
+    end
+    if isempty(outputName)
+        % Fallback: last FullyConnectedLayer
+        fcIdx = find(cellfun(@(n) isa(net.Layers(find(strcmp(layerNames,n),1)), ...
+            'nnet.cnn.layer.FullyConnectedLayer'), layerNames), 1, 'last');
+        if ~isempty(fcIdx)
+            outputName = layerNames{fcIdx};
+        else
+            outputName = layerNames{end-1};  % last before softmax
+        end
+    end
+
+    try
+        [featMap, logits] = forward(net, dlX, 'Outputs', {featureLayer, outputName});
+
+        logits = squeeze(logits);
+        [~, classIdx] = max(extractdata(logits));
+
+        score = sum(logits(classIdx), 'all');           % scalar score for chosen class
+        gradFeat = dlgradient(score, featMap);
+
+        weights = mean(gradFeat, [1 2]);                % channel importance
+        cam = sum(featMap .* weights, 3);               % weighted sum
+        cam = max(cam, 0);                              % ReLU
+
+        cam = extractdata(cam);
+        cam = imresize(single(cam), [224 224]);
+
+        maxVal = max(cam(:));
+        if maxVal > 1e-5
+            cam = cam / maxVal;
+        else
+            cam = zeros(224, 224, 'single');
+            fprintf('    [WARNING] Zero GradCAM map generated!\n');
+        end
+    catch ME
+        fprintf('    [GradCAM Error] %s\n', ME.message);
+        cam = zeros(224, 224, 'single');
     end
 end
+
 
 function valAcc = compute_validation_accuracy_simple(net, mbqVal, classes)
 % Returns balanced accuracy (mean of sensitivity and specificity)
@@ -3046,49 +3100,50 @@ function [gradCAMs, masks] = precompute_gradcam_mixed(...
         end
         srcImg = imresize(srcImg, [224 224]);
 
-        % === GradCAM Computation ===
+        % === GradCAM via dlfeval — required for dlnetwork ===
         try
-            trueLabel = char(string(imdsROI.Labels(i)));
-            gradCAMMap = gradCAM(net, srcImg, trueLabel, 'FeatureLayer', featureLayer);
+            camDL      = dlfeval(@student_cam_one, net, srcImg, classes, featureLayer, useGPU);
+            gradCAMMap = single(extractdata(camDL));
 
-            if useGPU && isa(gradCAMMap, 'gpuArray')
-                gradCAMMap = gather(gradCAMMap);
+            if size(gradCAMMap,1) ~= 224 || size(gradCAMMap,2) ~= 224
+                gradCAMMap = imresize(gradCAMMap, [224 224]);
             end
-            gradCAMMap = double(gradCAMMap);
-            
-            % Post-processing (same as ROI version)
-            gradCAMMap(~isfinite(gradCAMMap)) = 0;
-            gradCAMMap = max(gradCAMMap, 0);
-            gradCAMMap = imgaussfilt(gradCAMMap, 1.0);
-            
-            cmin = min(gradCAMMap(:)); cmax = max(gradCAMMap(:));
-            if cmax > cmin
-                gradCAMMap = (gradCAMMap - cmin) / (cmax - cmin + eps);
-            end
-            bg = prctile(gradCAMMap(:), 60);
-            gradCAMMap = max(gradCAMMap - bg, 0);
-            
-            if max(gradCAMMap(:)) > 0
-                gradCAMMap = gradCAMMap / max(gradCAMMap(:));
+
+            % Use shared postprocess (no percentile cut — preserves spatial signal)
+            gradCAMMap = postprocess_gradcam_map(gradCAMMap);
+
+            % Flag truly flat maps as failed
+            if max(gradCAMMap(:)) < 1e-4
+                gradCAMMap = zeros(224, 224, 'single');
+                nCamFail = nCamFail + 1;
             end
 
             gradCAMs{i} = gradCAMMap;
         catch ME
-            gradCAMs{i} = 0.5 * ones(224, 224);
+            gradCAMs{i} = zeros(224, 224, 'single');
             nCamFail = nCamFail + 1;
             if nCamFail <= 8
                 fprintf('    ⚠ GradCAM failed %d (%s): %s\n', i, fname, ME.message);
             end
         end
 
-        % === Save with subfolder structure (IMPORTANT) ===
+        % === Save GradCAM PNG ===
         if ~isempty(gradcamMasksDir)
             saveSubdir = fullfile(gradcamMasksDir, subdir);
             if ~exist(saveSubdir, 'dir')
-                mkdir(saveSubdir);
+                [mkStatus, mkMsg] = mkdir(saveSubdir);
+                if ~mkStatus
+                    warning('Cannot create dir %s: %s', saveSubdir, mkMsg);
+                end
             end
-            camSavePath = fullfile(saveSubdir, [fname '_gradcam.png']);
-            imwrite(uint8(255 * gradCAMs{i}), camSavePath);
+            if exist(saveSubdir, 'dir')
+                camSavePath = fullfile(saveSubdir, [fname '_gradcam.png']);
+                try
+                    imwrite(uint8(255 * gradCAMs{i}), camSavePath);
+                catch mkE
+                    warning('Cannot save CAM %s: %s', camSavePath, mkE.message);
+                end
+            end
         end
 
         % === Load Mask ===
@@ -3126,4 +3181,196 @@ function stem = get_stem(filepath)
     % Extract filename without extension, stripping any _mask/_roi suffix
     [~, name, ~] = fileparts(filepath);
     stem = regexprep(name, '_(mask|roi|seg)$', '');
+end
+
+
+function [precomputedGradCAM, precomputedMasks] = precompute_gradcam_and_masks(imds, vggNet, workingGradCAMLayer, maskDir, gradcamMasksDir)
+%PRECOMPUTE_GRADCAM_AND_MASKS Compute GradCAM maps and load masks from disk
+%   Uses dlfeval(@student_cam_one) for dlnetwork compatibility.
+%   Masks loaded from maskDir with multiple naming convention fallbacks.
+
+if nargin < 5
+    gradcamMasksDir = '';
+end
+
+nImages = numel(imds.Files);
+classes = categories(imds.Labels);
+useGPU  = canUseGPU;
+
+fprintf('  Computing GradCAM + loading masks for %d images...\n', nImages);
+fprintf('  maskDir: %s (exists=%d)\n', maskDir, exist(maskDir,'dir'));
+fprintf('  Network type: %s\n', class(vggNet));
+
+% Verify network is dlnetwork — hard error if not, since gradCAM() on
+% DAGNetwork gives wrong results for our custom training loop.
+if ~isa(vggNet, 'dlnetwork')
+    error(['precompute_gradcam_and_masks: vggNet must be a dlnetwork. ' ...
+           'Got %s. Convert with dag2dlnetwork() before calling.'], class(vggNet));
+end
+
+% Show sample mask filenames so user can verify convention
+if exist(maskDir, 'dir')
+    sampleFiles = dir(fullfile(maskDir, '**', '*.png'));
+    if isempty(sampleFiles)
+        sampleFiles = dir(fullfile(maskDir, '*.png'));
+    end
+    if ~isempty(sampleFiles)
+        fprintf('  Sample mask files found:\n');
+        for k = 1:min(3, numel(sampleFiles))
+            fprintf('    %s\n', fullfile(sampleFiles(k).folder, sampleFiles(k).name));
+        end
+    else
+        fprintf('  WARNING: No PNG files found in maskDir!\n');
+    end
+end
+
+precomputedGradCAM = cell(nImages, 1);
+precomputedMasks   = cell(nImages, 1);
+
+nCamValid  = 0;
+nCamFail   = 0;
+nMaskFound = 0;
+
+for i = 1:nImages
+    imgPath = imds.Files{i};
+    [classDir, fname, ext] = fileparts(imgPath);
+    [~, subdir] = fileparts(classDir);   % 'Normal' or 'PTB'
+
+    %% 1. Load image
+    try
+        img = imread(imgPath);
+        if size(img,3) == 1, img = repmat(img,[1 1 3]); end
+        img = imresize(img, [224 224]);
+        if ~isa(img,'uint8'), img = uint8(img); end
+    catch ME
+        fprintf('    ERROR loading image %d: %s\n', i, ME.message);
+        precomputedGradCAM{i} = 0.5 * ones(224,224,'single');
+        precomputedMasks{i}   = false(224,224);
+        nCamFail = nCamFail + 1;
+        continue;
+    end
+
+    %% 2. Compute GradCAM via dlfeval (required for dlnetwork)
+    try
+        camDL      = dlfeval(@student_cam_one, vggNet, img, classes, workingGradCAMLayer, useGPU);
+        gradCAMMap = single(extractdata(camDL));
+
+
+        if size(gradCAMMap,1)~=224 || size(gradCAMMap,2)~=224
+            gradCAMMap = imresize(gradCAMMap,[224 224]);
+        end
+
+        gradCAMMap = postprocess_gradcam_map(gradCAMMap);
+
+        % Validate: a real CAM must have spatial variance
+        if std(gradCAMMap(:)) < 1e-4 || max(gradCAMMap(:)) < 1e-4
+            gradCAMMap = 0.5 * ones(224,224,'single');
+            nCamFail = nCamFail + 1;
+            if nCamFail <= 5
+                fprintf('    WARNING: Flat CAM for image %d (%s)\n', i, fname);
+            end
+        else
+            nCamValid = nCamValid + 1;
+        end
+    catch ME
+        gradCAMMap = 0.5 * ones(224,224,'single');
+        nCamFail   = nCamFail + 1;
+        if nCamFail <= 5
+            fprintf('    GradCAM failed %d (%s): %s\n', i, fname, ME.message);
+        end
+    end
+
+    precomputedGradCAM{i} = gradCAMMap;
+
+    %% 3. Optionally save GradCAM PNG
+    if ~isempty(gradcamMasksDir)
+        camSubdir = fullfile(gradcamMasksDir, subdir);
+        if ~exist(camSubdir, 'dir')
+            [mkStatus, mkMsg] = mkdir(camSubdir);
+            if ~mkStatus
+                warning('Cannot create dir %s: %s', camSubdir, mkMsg);
+            end
+        end
+        if exist(camSubdir, 'dir')
+            try
+                imwrite(uint8(255 * gradCAMMap), fullfile(camSubdir, [fname '_gradcam.png']));
+            catch mkE
+                warning('Cannot save CAM for %s: %s', fname, mkE.message);
+            end
+        end
+    end
+
+    %% 4. Load mask — try all naming conventions
+    maskCandidates = {
+        fullfile(maskDir, [fname '_mask.png']);          % flat: name_mask.png
+        fullfile(maskDir, [fname '_mask' ext]);          % flat: name_mask.ext
+        fullfile(maskDir, [fname '.png']);               % flat plain: name.png
+        fullfile(maskDir, [fname ext]);                  % flat plain: name.ext
+        fullfile(maskDir, subdir, [fname '_mask.png']);  % subdir: Normal/name_mask.png
+        fullfile(maskDir, subdir, [fname '.png']);       % subdir plain
+    };
+
+    precomputedMasks{i} = false(224,224);
+    for c = 1:numel(maskCandidates)
+        if exist(maskCandidates{c},'file')
+            m = imread(maskCandidates{c});
+            if size(m,3)>1, m = rgb2gray(m); end
+            precomputedMasks{i} = imresize(logical(imbinarize(m)),[224 224],'nearest');
+            nMaskFound = nMaskFound + 1;
+            if i <= 3
+                fprintf('    [Mask OK ] %s\n', maskCandidates{c});
+            end
+            break;
+        end
+    end
+
+    if ~any(precomputedMasks{i}(:)) && i <= 5
+        fprintf('    [Mask MISS] %s — tried %d paths, first: %s\n', ...
+            fname, numel(maskCandidates), maskCandidates{1});
+    end
+
+    if mod(i,100)==0
+        fprintf('    Processed %d/%d  (CAMs valid: %d  masks found: %d)\n', ...
+            i, nImages, nCamValid, nMaskFound);
+    end
+end
+
+%% Summary
+fprintf('  Done.\n');
+fprintf('  Valid GradCAMs : %d / %d\n', nCamValid,  nImages);
+fprintf('  Failed GradCAMs: %d / %d\n', nCamFail,   nImages);
+fprintf('  Valid Masks    : %d / %d\n', nMaskFound, nImages);
+if nCamValid == 0
+    fprintf('  *** ALL GRADCAMS FLAT/FAILED ***\n');
+    fprintf('  Check: (1) network is trained (not random weights)\n');
+    fprintf('         (2) featureLayer "%s" is correct\n', workingGradCAMLayer);
+    fprintf('         (3) run check_gradcam_gradients.m for diagnosis\n');
+end
+if nMaskFound == 0
+    fprintf('  *** ALL MASKS MISSING — check maskDir path and filename convention ***\n');
+end
+end
+
+function cam = postprocess_gradcam_map(cam)
+    if isempty(cam) || all(~isfinite(cam(:)))
+        cam = 0.5 * ones(224, 224, 'single');
+        return;
+    end
+    cam = single(cam);
+    cam(~isfinite(cam)) = 0;
+    cam = max(cam, 0);
+
+    % Mild smoothing only
+    cam = imgaussfilt(cam, 1.5);
+
+    % Normalize to [0, 1] — NO percentile cut
+    cmin = min(cam(:));
+    cmax = max(cam(:));
+    if cmax > cmin
+        cam = (cam - cmin) / (cmax - cmin + eps);
+    else
+        cam = zeros(224, 224, 'single');
+    end
+    % Result: bright = high activation, dark = low activation
+    % This is the standard GradCAM visualization convention
 end
