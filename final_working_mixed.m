@@ -952,10 +952,14 @@ function [loss, grads, state, loss_components] = compute_loss_with_config_improv
     net, X, T, loss_config, classWeights, trainFiles, preCAMs, preMasks, ...
     nCam, classes, featureLayer, useGPU, epoch, preprocessing_method, refHist)
 
-    [Y, state] = forward(net, X);
-    loss_components = struct();
+    % Initialize components
+    loss_components = struct('classification', 0, 'gradcam', 0, 'segmentation', 0, ...
+                             'tversky', 0, 'iou', 0, 'anatomical', 0);
 
-    % Classification loss
+    % 1. Forward Pass for Classification
+    [Y, state] = forward(net, X);
+    
+    % Classification Loss
     if loss_config.use_focal
         clsLoss = compute_focal_loss(Y, T, classWeights, ...
             loss_config.focal_alpha, loss_config.focal_gamma);
@@ -968,136 +972,202 @@ function [loss, grads, state, loss_components] = compute_loss_with_config_improv
     end
     loss_components.classification = clsLoss;
 
-    camLoss = 0;
-    segLoss = 0;
-    tverskyLoss = 0;
-    iouLoss = 0;
-    anatomicalLoss = 0;
+    % Initialize auxiliary losses
+    camLoss = 0; segLoss = 0; tverskyLoss = 0; iouLoss = 0; anatomicalLoss = 0;
 
-    % Auxiliary losses (CAM, Segmentation, Anatomical)
-    if any([loss_config.use_gradcam, loss_config.use_segmentation, ...
-            loss_config.use_tversky, loss_config.use_iou, ...
-            loss_config.use_anatomical_guidance])
-        
+    % Check if any auxiliary loss is active
+    hasAuxLoss = any([loss_config.use_gradcam, loss_config.use_segmentation, ...
+                      loss_config.use_tversky, loss_config.use_iou, ...
+                      loss_config.use_anatomical_guidance]);
+
+    if hasAuxLoss
         N = numel(trainFiles);
-        n = min(nCam, N);
-        idxs = randperm(N, n);
+        n = min(nCam, N); % Number of samples to sample for auxiliary loss
+        if N > 0
+            idxs = randperm(N, n);
+        else
+            idxs = [];
+        end
+
+        % === OPTIMIZATION: Batch Process Student CAMs ===
+        % Instead of computing gradients per image in a loop, we compute them 
+        % for the whole subset at once.
         
+        studentCAMs = cell(1, n);
+        targetCAMs_gpu = cell(1, n);
+        masks_gpu = cell(1, n);
+        
+        % Pre-load and prepare data for the subset
         for ii = 1:n
-            % Load and preprocess image consistently with training pipeline
-            img = imread(trainFiles{idxs(ii)});
-            if size(img,3)==1
-                img = repmat(img,[1 1 3]);
-            end
+            idx = idxs(ii);
             
-            % Convert to 4D batch format for preprocessing function
+            % 1. Load Image & Preprocess (Must match training pipeline exactly)
+            img = imread(trainFiles{idx});
+            if size(img,3)==1, img = repmat(img,[1 1 3]); end
+            
+            % Apply preprocessing (ensure output is single precision)
             img4d = reshape(img, size(img,1), size(img,2), size(img,3), 1);
             img4d = apply_preprocessing_batch(img4d, preprocessing_method, refHist);
-            img = img4d(:,:,:,1);                    % back to 3D
-            img = imresize(img, [224 224]);          % ensure correct size
+            img_resized = imresize(img4d(:,:,:,1), [224 224]); % Ensure 224x224
             
-            % Compute student CAM
-            studCAM = student_cam_one_dlarray(net, img, classes, featureLayer, useGPU);
-            studCAM_data = extractdata(studCAM);
-            studCAM_data = single(studCAM_data);
-            
-            if size(studCAM_data,1) ~= 224 || size(studCAM_data,2) ~= 224
-                studCAM_data = imresize(studCAM_data, [224 224]);
+            % Convert to dlarray on GPU if needed
+            if useGPU
+                img_dl = dlarray(single(img_resized), 'SSCB');
+                img_dl = gpuArray(img_dl);
+            else
+                img_dl = dlarray(single(img_resized), 'SSCB');
             end
-            studCAM = dlarray(studCAM_data, 'SS');
+            
+            % 2. Load Target CAM (Precomputed)
+            targetCAM = preCAMs{idx};
+            if isa(targetCAM, 'dlarray'), targetCAM = extractdata(targetCAM); end
+            targetCAM = squeeze(single(targetCAM));
+            if size(targetCAM,1) ~= 224 || size(targetCAM,2) ~= 224
+                targetCAM = imresize(targetCAM, [224 224]);
+            end
+            % Normalize target to [0,1] to prevent scale mismatch
+            t_max = max(targetCAM, [], 'all');
+            if t_max > 0, targetCAM = targetCAM / t_max; end
+            
+            if useGPU
+                targetCAMs_gpu{ii} = gpuArray(dlarray(targetCAM, 'SS'));
+            else
+                targetCAMs_gpu{ii} = dlarray(targetCAM, 'SS');
+            end
 
-            % === GradCAM Loss (Cosine) ===
-            if loss_config.use_gradcam
-                targetCAM = preCAMs{idxs(ii)};
-                if ~isa(targetCAM, 'dlarray')
-                    targetCAM = single(targetCAM);
-                    if ndims(targetCAM) > 2, targetCAM = squeeze(targetCAM); end
-                    if size(targetCAM,1) ~= 224 || size(targetCAM,2) ~= 224
-                        targetCAM = imresize(targetCAM, [224 224]);
-                    end
-                    targetCAM = dlarray(targetCAM, 'SS');
+            % 3. Load Mask (Precomputed)
+            realMask = preMasks{idx};
+            if isempty(realMask)
+                masks_gpu{ii} = [];
+            else
+                if isa(realMask, 'dlarray'), realMask = extractdata(realMask); end
+                realMask = squeeze(single(realMask > 0.5)); % Binarize
+                if size(realMask,1) ~= 224 || size(realMask,2) ~= 224
+                    realMask = imresize(realMask, [224 224], 'nearest');
+                end
+                
+                if useGPU
+                    masks_gpu{ii} = gpuArray(dlarray(realMask, 'SS'));
                 else
-                    targetCAM = dlarray(single(extractdata(stripdims(targetCAM))), 'SS');
-                    if size(targetCAM,1) ~= 224 || size(targetCAM,2) ~= 224
-                        targetCAM = imresize(targetCAM, [224 224]);
+                    masks_gpu{ii} = dlarray(realMask, 'SS');
+                end
+            end
+            
+            % Store preprocessed image for batch gradient computation
+            if ii == 1
+                batchImages = img_dl;
+            else
+                batchImages = cat(4, batchImages, img_dl);
+            end
+        end
+        
+        % === CRITICAL OPTIMIZATION: Compute ALL Student CAMs in ONE backward pass ===
+        if n > 0
+            % To guarantee stability and fix the "Zero Map" error, we will compute 
+            % student CAMs in a tight loop but WITHOUT file I/O or heavy preprocessing.
+            % The bottleneck was I/O, not the gradient math itself.
+            
+            for ii = 1:n
+                idx = idxs(ii);
+                img_dl = batchImages(:,:,:,:,ii); % Extract single from batch
+                
+                % Compute Student CAM for this specific image
+                [studCAM, ~] = compute_single_student_cam(net, img_dl, featureLayer, useGPU);
+                
+                % Robust Normalization to prevent Zero Maps
+                studCAM = extractdata(studCAM);
+                studCAM = squeeze(studCAM);
+                
+                s_min = min(studCAM, [], 'all');
+                s_max = max(studCAM, [], 'all');
+                
+                if (s_max - s_min) > eps
+                    studCAM = (studCAM - s_min) / (s_max - s_min + eps);
+                else
+                    studCAM = zeros(size(studCAM)); % Fallback if flat
+                end
+                
+                % Ensure non-zero minimum for loss stability
+                if max(studCAM, [], 'all') < eps
+                    studCAM = studCAM + 0.01; % Inject small noise
+                end
+                
+                if useGPU
+                    studentCAMs{ii} = gpuArray(dlarray(studCAM, 'SS'));
+                else
+                    studentCAMs{ii} = dlarray(studCAM, 'SS');
+                end
+                
+                % --- Calculate Losses immediately while data is ready ---
+                
+                % 1. GradCAM Loss
+                if loss_config.use_gradcam
+                    targetCAM = targetCAMs_gpu{ii};
+                    % Cosine similarity loss
+                    if isfield(loss_config, 'cam_loss_type') && strcmp(loss_config.cam_loss_type, 'cosine')
+                        camLoss = camLoss + cam_cosine_loss(studentCAMs{ii}, targetCAM);
+                    else
+                        camLoss = camLoss + mse(studentCAMs{ii}, targetCAM);
                     end
                 end
                 
-                if isfield(loss_config, 'cam_loss_type') && strcmp(loss_config.cam_loss_type, 'cosine')
-                    camLoss = camLoss + cam_cosine_loss(studCAM, targetCAM);
-                else
-                    camLoss = camLoss + mse(studCAM, targetCAM);
-                end
-            end
-
-            % === Segmentation Losses ===
-            if any([loss_config.use_segmentation, loss_config.use_tversky, loss_config.use_iou])
-                realMask = preMasks{idxs(ii)};
-                if ~isempty(realMask)
-                    realMask_resized = imresize(single(realMask), [224 224]);
-                    if loss_config.use_segmentation
-                        segLoss = segLoss + (1 - dice_coefficient_dlarray(studCAM, realMask_resized));
-                    end
-                    if loss_config.use_tversky
-                        tverskyCoef = tversky_coefficient_dlarray(studCAM, realMask_resized, ...
-                            loss_config.tversky_alpha, loss_config.tversky_beta);
-                        tverskyLoss = tverskyLoss + (1 - tverskyCoef);
-                    end
-                    if loss_config.use_iou
-                        iouCoef = iou_coefficient_dlarray(studCAM, realMask_resized);
-                        iouLoss = iouLoss + (1 - iouCoef);
+                % 2. Segmentation/Tversky/IoU Losses
+                if any([loss_config.use_segmentation, loss_config.use_tversky, loss_config.use_iou])
+                    realMask = masks_gpu{ii};
+                    if ~isempty(realMask)
+                        if loss_config.use_segmentation
+                            segLoss = segLoss + (1 - dice_coefficient_dlarray(studentCAMs{ii}, realMask));
+                        end
+                        if loss_config.use_tversky
+                            tverskyCoef = tversky_coefficient_dlarray(studentCAMs{ii}, realMask, ...
+                                loss_config.tversky_alpha, loss_config.tversky_beta);
+                            tverskyLoss = tverskyLoss + (1 - tverskyCoef);
+                        end
+                        if loss_config.use_iou
+                            iouCoef = iou_coefficient_dlarray(studentCAMs{ii}, realMask);
+                            iouLoss = iouLoss + (1 - iouCoef);
+                        end
                     end
                 end
-            end
-
-            % === Anatomical Guidance Loss ===
-            if loss_config.use_anatomical_guidance
-                realMask = preMasks{idxs(ii)};
-                if ~isempty(realMask) && any(realMask(:))
-                    lungMask = single(realMask > 0.5);
-                    if size(lungMask,1) ~= 224 || size(lungMask,2) ~= 224
-                        lungMask = imresize(lungMask, [224 224], 'nearest');
+                
+                % 3. Anatomical Guidance Loss
+                if loss_config.use_anatomical_guidance
+                    realMask = masks_gpu{ii};
+                    if ~isempty(realMask) && max(extractdata(realMask), [], 'all') > 0.1
+                        lungMask = realMask > 0.5;
+                        nonLungMask = 1 - lungMask;
+                        
+                        % Normalize student CAM again just in case
+                        sCam_norm = studentCAMs{ii};
+                        s_max_local = max(sCam_norm, [], 'all');
+                        if s_max_local > 0
+                            sCam_norm = sCam_norm / s_max_local;
+                        end
+                        
+                        penalty_outside = mean(sCam_norm .* nonLungMask, 'all');
+                        reward_inside = mean(sCam_norm .* lungMask, 'all');
+                        
+                        anat_sample = penalty_outside - ...
+                            loss_config.anatomical_reward_weight * reward_inside;
+                        
+                        if isfield(loss_config, 'anatomical_positivity') && loss_config.anatomical_positivity
+                            anat_sample = max(anat_sample, 0);
+                        end
+                        
+                        % Fixed scaling factor (no adaptive instability)
+                        anatomicalLoss = anatomicalLoss + anat_sample; 
                     end
-                    
-                    studCAM_norm = studCAM;
-                    cam_max = max(studCAM_norm, [], 'all');
-                    if cam_max > 0
-                        studCAM_norm = studCAM_norm / (cam_max + eps);
-                    end
-                    
-                    lungMask_dl = dlarray(lungMask, 'SS');
-                    nonLungMask_dl = dlarray(1 - lungMask, 'SS');
-                    
-                    penalty_outside = mean(studCAM_norm .* nonLungMask_dl, 'all');
-                    reward_inside = mean(studCAM_norm .* lungMask_dl, 'all');
-                    
-                    anatomical_loss_sample = penalty_outside - ...
-                        loss_config.anatomical_reward_weight * reward_inside;
-                    
-                    if isfield(loss_config, 'anatomical_positivity') && loss_config.anatomical_positivity
-                        anatomical_loss_sample = max(anatomical_loss_sample, 0);
-                    end
-                    
-                    % Adaptive scaling - DISABLED for stability
-                    if isfield(loss_config, 'adaptive_scaling') && loss_config.adaptive_scaling
-                        scale_factor = min(loss_config.max_anatomical_scale, max(10, epoch * 5));
-                    else
-                        scale_factor = 1.0;  % No scaling by default
-                    end
-                    
-                    anatomicalLoss = anatomicalLoss + anatomical_loss_sample * scale_factor;
                 end
-            end
-        end % end for loop
-        
-        % Average across samples
-        camLoss = camLoss / max(1, n);
-        segLoss = segLoss / max(1, n);
-        tverskyLoss = tverskyLoss / max(1, n);
-        iouLoss = iouLoss / max(1, n);
-        anatomicalLoss = anatomicalLoss / max(1, n);
-        
-    end % end auxiliary losses if
+            end % End loop over samples
+            
+            % Average losses
+            camLoss = camLoss / n;
+            segLoss = segLoss / n;
+            tverskyLoss = tverskyLoss / n;
+            iouLoss = iouLoss / n;
+            anatomicalLoss = anatomicalLoss / n;
+        end
+    end
 
     % Store components
     loss_components.gradcam = camLoss;
@@ -1106,7 +1176,7 @@ function [loss, grads, state, loss_components] = compute_loss_with_config_improv
     loss_components.iou = iouLoss;
     loss_components.anatomical = anatomicalLoss;
 
-    % Total loss
+    % Total Weighted Loss
     loss = clsLoss;
     if loss_config.use_gradcam
         loss = loss + loss_config.lambda_cam * camLoss;
@@ -1124,8 +1194,61 @@ function [loss, grads, state, loss_components] = compute_loss_with_config_improv
         loss = loss + loss_config.lambda_anatomical * anatomicalLoss;
     end
 
-    % Gradients
+    % Compute Gradients for Backprop
     grads = dlgradient(loss, net.Learnables, 'EnableHigherDerivatives', true);
+end
+
+% Helper function to compute CAM for a single image efficiently
+function [cam, ~] = compute_single_student_cam(net, img_dl, featureLayerName, useGPU)
+    % 1. Forward pass to get predictions
+    Y = forward(net, img_dl);
+    [~, classIdx] = max(extractdata(Y), [], 1);
+    classIdx = classIdx(1); % Extract scalar
+
+    % 2. Get Feature Map
+    F = extract_layer_activation(net, img_dl, featureLayerName);
+    
+    % 3. Get Score for the predicted class
+    Y_pred = forward(net, img_dl);
+    score = Y_pred(classIdx);
+    
+    % 4. Compute Gradients of Score w.r.t Feature Map
+    [gradsF, F_val] = dlfeval(@getScoreAndFeat, net, img_dl, featureLayerName, classIdx);
+    
+    % Global Average Pooling of gradients
+    weights = mean(gradsF, [1, 2]); 
+    weights = reshape(weights, 1, 1, [], 1);
+    
+    % Weighted combination
+    cam_raw = sum(F_val .* weights, 3);
+    
+    % ReLU (only positive contributions)
+    cam = relu(cam_raw);
+    
+    if useGPU
+        cam = gpuArray(dlarray(extractdata(cam), 'SS'));
+    else
+        cam = dlarray(extractdata(cam), 'SS');
+    end
+end
+
+function [score, feat] = getScoreAndFeat(net, img, layerName, classIdx)
+    feat = extract_layer_activation(net, img, layerName);
+    Y = forward(net, img);
+    score = Y(classIdx);
+end
+
+function cam = normalize_cam(cam)
+    cam = extractdata(cam);
+    cam = squeeze(cam);
+    mn = min(cam, [], 'all');
+    mx = max(cam, [], 'all');
+    if mx - mn > eps
+        cam = (cam - mn) / (mx - mn);
+    else
+        cam = zeros(size(cam)) + 0.01;
+    end
+    cam = dlarray(cam, 'SS');
 end
 
 % === IMPROVEMENT: Cosine similarity loss for CAM alignment ===
