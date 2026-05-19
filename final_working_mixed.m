@@ -3384,7 +3384,6 @@ function cam = postprocess_gradcam_map(cam)
     if cmax > cmin
         cam = (cam - cmin) / (cmax - cmin + eps);
     end
-    
     % Result: bright = high activation, dark = low activation
     % This is the standard GradCAM visualization convention
 end
