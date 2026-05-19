@@ -73,10 +73,10 @@ config.warmup_epochs = 3;           % LR warmup for stable start
 config.min_lr_ratio = 0.1;          % Minimum LR for cosine annealing
 % =======================================================
 
-% Optimal hyperparameters (v2.3 - OPTIMIZED PTB BIAS)
-% Loss weights (safer defaults)
-config.lambda_cam = 2;            % Weight for GradCAM loss (reduced from 10.0)
-config.lambda_tversky = 5;        % Weight for Tversky loss
+% Optimal hyperparameters (v2.4 - BALANCED LOSS WEIGHTS)
+% Loss weights (balanced to prevent domination)
+config.lambda_cam = 0.5;            % Weight for GradCAM loss (reduced from 2.0/8.0)
+config.lambda_tversky = 1.0;        % Weight for Tversky loss (reduced from 5.0)
 config.tversky_alpha = 0.7;
 config.tversky_beta = 0.3;
 config.focal_alpha = [0.45, 0.55];    % [normal, PTB] 4 6
@@ -95,7 +95,7 @@ loss_config.use_anatomical_guidance = true;
 loss_config.lambda_cam = config.lambda_cam;
 loss_config.lambda_tversky = config.lambda_tversky;
 % Anatomical guidance weight: keep moderate by default to avoid domination
-loss_config.lambda_anatomical =10;
+loss_config.lambda_anatomical     = 0.5;   % REDUCED: prevents anatomical loss domination
 loss_config.anatomical_reward_weight = 0.75;
 loss_config.tversky_alpha = config.tversky_alpha;
 loss_config.tversky_beta = config.tversky_beta;
@@ -105,8 +105,8 @@ loss_config.focal_gamma = config.focal_gamma;
 % === IMPROVEMENT: Additional loss configuration ===
 loss_config.cam_loss_type = 'cosine';        % 'mse' or 'cosine' (recommended)
 loss_config.anatomical_positivity = true;    % Enforce non-negative anatomical loss
-loss_config.adaptive_scaling = true;         % Epoch-dependent loss scaling
-loss_config.max_anatomical_scale = 100;      % Max scaling factor
+loss_config.adaptive_scaling = false;         % DISABLED: epoch-dependent loss scaling causes instability
+loss_config.max_anatomical_scale = 10;      % Max scaling factor (reduced from 100)
 loss_config.gradient_clip_norm = 1.0;        % Gradient clipping threshold
 % ================================================
 
@@ -133,10 +133,10 @@ if strcmp(config.teacher_model_spec, 'mixed')
     loss_config.use_gradcam           = true;   % CXR-derived CAMs now valid
     loss_config.use_tversky           = true;
     loss_config.use_anatomical_guidance = true;
-    loss_config.focal_alpha           = [0.35, 0.65];  % stronger PTB bias
-    loss_config.lambda_cam            = 8;   % conservative — new CAM source
-    loss_config.lambda_tversky        = 5;
-    loss_config.lambda_anatomical     = 10;
+    loss_config.focal_alpha           = [0.45, 0.55];  % balanced class weights
+    loss_config.lambda_cam            = 0.5;   % REDUCED: prevents GradCAM loss domination
+    loss_config.lambda_tversky        = 1.0;   % REDUCED: balanced with classification
+    loss_config.lambda_anatomical     = 0.5;   % REDUCED: prevents anatomical loss domination
     fprintf('  [Mixed teacher] Loss config: focal + class_weights + gradcam + tversky + anatomical\n');
 
 elseif strcmp(config.teacher_model_spec, 'roi')
@@ -145,10 +145,10 @@ elseif strcmp(config.teacher_model_spec, 'roi')
     loss_config.use_gradcam           = true;
     loss_config.use_tversky           = true;
     loss_config.use_anatomical_guidance = true;
-    loss_config.focal_alpha           = [0.35, 0.65];
+    loss_config.focal_alpha           = [0.45, 0.55];
     loss_config.lambda_cam            = 0.1;
-    loss_config.lambda_tversky        = 2.0;
-    loss_config.lambda_anatomical     = 0.2;
+    loss_config.lambda_tversky        = 0.5;
+    loss_config.lambda_anatomical     = 0.1;
     fprintf('  [ROI teacher] Loss config: focal + class_weights + gradcam + tversky + anatomical\n');
 
 elseif strcmp(config.teacher_model_spec, 'cxr')
@@ -157,9 +157,9 @@ elseif strcmp(config.teacher_model_spec, 'cxr')
     loss_config.use_gradcam           = false;  % CXR teacher CAMs on ROI — still risky
     loss_config.use_tversky           = true;
     loss_config.use_anatomical_guidance = true;
-    loss_config.focal_alpha           = [0.35, 0.65];
-    loss_config.lambda_tversky        = 1.5;
-    loss_config.lambda_anatomical     = 0.3;
+    loss_config.focal_alpha           = [0.45, 0.55];
+    loss_config.lambda_tversky        = 0.5;
+    loss_config.lambda_anatomical     = 0.1;
     fprintf('  [CXR teacher] Loss config: focal + class_weights + tversky + anatomical\n');
 end
 
@@ -1078,11 +1078,11 @@ function [loss, grads, state, loss_components] = compute_loss_with_config_improv
                         anatomical_loss_sample = max(anatomical_loss_sample, 0);
                     end
                     
-                    % Adaptive scaling
+                    % Adaptive scaling - DISABLED for stability
                     if isfield(loss_config, 'adaptive_scaling') && loss_config.adaptive_scaling
-                        scale_factor = min(loss_config.max_anatomical_scale, max(100, epoch * 25));
+                        scale_factor = min(loss_config.max_anatomical_scale, max(10, epoch * 5));
                     else
-                        scale_factor = 800;
+                        scale_factor = 1.0;  % No scaling by default
                     end
                     
                     anatomicalLoss = anatomicalLoss + anatomical_loss_sample * scale_factor;
@@ -3352,6 +3352,14 @@ end
 end
 
 function cam = postprocess_gradcam_map(cam)
+    %POSTPROCESS_GRADCAM_MAP Improve GradCAM visualization quality
+    %   Enhanced version with better contrast and spatial coherence
+    
+    % CRITICAL: Move to CPU first - image processing functions don't support gpuArray
+    if exists('gather', 'file') && isgpuarray(cam)
+        cam = gather(cam);
+    end
+    
     if isempty(cam) || all(~isfinite(cam(:)))
         cam = 0.5 * ones(224, 224, 'single');
         return;
@@ -3359,11 +3367,14 @@ function cam = postprocess_gradcam_map(cam)
     cam = single(cam);
     cam(~isfinite(cam)) = 0;
     cam = max(cam, 0);
-
-    % Mild smoothing only
-    cam = imgaussfilt(cam, 1.5);
-
-    % Normalize to [0, 1] — NO percentile cut
+    
+    % Enhanced smoothing for better spatial coherence
+    cam = imgaussfilt(cam, 2.0);  % Increased from 1.5 for smoother maps
+    
+    % Contrast enhancement via adaptive histogram equalization
+    cam = adapthisteq(cam, 'ClipLimit', 0.02, 'Distribution', 'rayleigh');
+    
+    % Normalize to [0, 1] with improved dynamic range
     cmin = min(cam(:));
     cmax = max(cam(:));
     if cmax > cmin
@@ -3371,6 +3382,17 @@ function cam = postprocess_gradcam_map(cam)
     else
         cam = zeros(224, 224, 'single');
     end
+    
+    % Boost contrast slightly for better visualization
+    cam = cam .^ 0.8;  % Gamma correction for better visibility
+    
+    % Final normalization
+    cmin = min(cam(:));
+    cmax = max(cam(:));
+    if cmax > cmin
+        cam = (cam - cmin) / (cmax - cmin + eps);
+    end
+    
     % Result: bright = high activation, dark = low activation
     % This is the standard GradCAM visualization convention
 end
