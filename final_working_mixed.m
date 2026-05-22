@@ -63,7 +63,7 @@ config.patience = 7;
 config.min_delta = 0.005;
 config.useGPU = canUseGPU;
 config.batchSize = 14;
-config.initialLearnRate = 0.001;
+config.initialLearnRate = 1e-4;
 config.decay = 0.0042;
 config.momentum = 0.8725;
 config.weightDecay = 0.0001;
@@ -71,12 +71,16 @@ config.weightDecay = 0.0001;
 % === IMPROVEMENT: Learning rate scheduling parameters ===
 config.warmup_epochs = 3;           % LR warmup for stable start
 config.min_lr_ratio = 0.1;          % Minimum LR for cosine annealing
+config.aux_start_epoch = 0;         % Match rework.m curriculum: CE first, CAM/Tversky later
+config.aux_loss_interval = 1;       % Only apply expensive auxiliary losses every N batches
+config.aux_samples_per_step = config.batchSize;    % Smaller CAM subset per step to avoid heavy disk I/O
+config.enable_train_time_segmentation_eval = false;  % Skip CAM-based IoU/Dice during training
 % =======================================================
 
 % Optimal hyperparameters (v2.4 - BALANCED LOSS WEIGHTS)
 % Loss weights (balanced to prevent domination)
-config.lambda_cam = 0.5;            % Weight for GradCAM loss (reduced from 2.0/8.0)
-config.lambda_tversky = 1.0;        % Weight for Tversky loss (reduced from 5.0)
+config.lambda_cam = 0.05;           % Weak GradCAM regularization
+config.lambda_tversky = 0.05;       % Weak Tversky regularization
 config.tversky_alpha = 0.7;
 config.tversky_beta = 0.3;
 config.focal_alpha = [0.45, 0.55];    % [normal, PTB] 4 6
@@ -84,18 +88,18 @@ config.focal_gamma = 2.0;
 
 % Loss function configuration
 loss_config = struct();
-% Enable GradCAM and anatomical guidance by default when training on ROI images
+% Default to the stable ROI recipe validated in rework.m:
+% CE + weak GradCAM + weak Tversky, with no focal weighting/anatomical term.
 loss_config.use_gradcam = true;
 loss_config.use_segmentation = false;
-loss_config.use_focal = true;
-loss_config.use_class_weights = true;
+loss_config.use_focal = false;
+loss_config.use_class_weights = false;
 loss_config.use_tversky = true;
 loss_config.use_iou = false;
-loss_config.use_anatomical_guidance = true;
-loss_config.lambda_cam = config.lambda_cam;
-loss_config.lambda_tversky = config.lambda_tversky;
-% Anatomical guidance weight: keep moderate by default to avoid domination
-loss_config.lambda_anatomical     = 0.5;   % REDUCED: prevents anatomical loss domination
+loss_config.use_anatomical_guidance = false;
+loss_config.lambda_cam = 0.05;
+loss_config.lambda_tversky = 0.05;
+loss_config.lambda_anatomical     = 0.0;
 loss_config.anatomical_reward_weight = 0.75;
 loss_config.tversky_alpha = config.tversky_alpha;
 loss_config.tversky_beta = config.tversky_beta;
@@ -128,39 +132,38 @@ if strcmp(config.teacher_model_spec, 'mixed')
     % because precompute_gradcam_mixed runs on matched CXR images.
     % All mask-based losses (tversky, anatomical) are always safe
     % since they use ground-truth masks, not teacher CAMs.
-    loss_config.use_focal             = true;
-    loss_config.use_class_weights     = true;
+    loss_config.use_focal             = false;
+    loss_config.use_class_weights     = false;
     loss_config.use_gradcam           = true;   % CXR-derived CAMs now valid
     loss_config.use_tversky           = true;
-    loss_config.use_anatomical_guidance = true;
+    loss_config.use_anatomical_guidance = false;
     loss_config.focal_alpha           = [0.45, 0.55];  % balanced class weights
-    loss_config.lambda_cam            = 0.5;   % REDUCED: prevents GradCAM loss domination
-    loss_config.lambda_tversky        = 1.0;   % REDUCED: balanced with classification
-    loss_config.lambda_anatomical     = 0.5;   % REDUCED: prevents anatomical loss domination
-    fprintf('  [Mixed teacher] Loss config: focal + class_weights + gradcam + tversky + anatomical\n');
+    loss_config.lambda_cam            = 0.05;
+    loss_config.lambda_anatomical     = 0.0;
+    fprintf('  [Mixed teacher] Loss config: CE + weak gradcam + weak tversky\n');
 
 elseif strcmp(config.teacher_model_spec, 'roi')
-    loss_config.use_focal             = true;
-    loss_config.use_class_weights     = true;
+    loss_config.use_focal             = false;
+    loss_config.use_class_weights     = false;
     loss_config.use_gradcam           = true;
     loss_config.use_tversky           = true;
-    loss_config.use_anatomical_guidance = true;
+    loss_config.use_anatomical_guidance = false;
     loss_config.focal_alpha           = [0.45, 0.55];
-    loss_config.lambda_cam            = 0.1;
-    loss_config.lambda_tversky        = 0.5;
-    loss_config.lambda_anatomical     = 0.1;
-    fprintf('  [ROI teacher] Loss config: focal + class_weights + gradcam + tversky + anatomical\n');
+    loss_config.lambda_cam            = 0.05;
+    loss_config.lambda_tversky        = 0.05;
+    loss_config.lambda_anatomical     = 0.0;
+    fprintf('  [ROI teacher] Loss config: CE + weak gradcam + weak tversky\n');
 
 elseif strcmp(config.teacher_model_spec, 'cxr')
-    loss_config.use_focal             = true;
-    loss_config.use_class_weights     = true;
+    loss_config.use_focal             = false;
+    loss_config.use_class_weights     = false;
     loss_config.use_gradcam           = false;  % CXR teacher CAMs on ROI — still risky
     loss_config.use_tversky           = true;
-    loss_config.use_anatomical_guidance = true;
+    loss_config.use_anatomical_guidance = false;
     loss_config.focal_alpha           = [0.45, 0.55];
-    loss_config.lambda_tversky        = 0.5;
-    loss_config.lambda_anatomical     = 0.1;
-    fprintf('  [CXR teacher] Loss config: focal + class_weights + tversky + anatomical\n');
+    loss_config.lambda_tversky        = 0.05;
+    loss_config.lambda_anatomical     = 0.0;
+    fprintf('  [CXR teacher] Loss config: CE + weak tversky\n');
 end
 
 
@@ -196,23 +199,28 @@ fprintf('  λ_cam: %.4f (Cosine similarity for structural alignment)\n', config.
 fprintf('  λ_tversky: %.4f\n', config.lambda_tversky);
 fprintf('  λ_anatomical: %.4f (Positive constraint + adaptive scaling)\n', loss_config.lambda_anatomical);
 fprintf('  Anatomical reward weight: %.2f\n', loss_config.anatomical_reward_weight);
+fprintf('  Active CAM loss weight: %.4f\n', loss_config.lambda_cam);
+fprintf('  Active Tversky loss weight: %.4f\n', loss_config.lambda_tversky);
 fprintf('  Focal alpha: [%.2f, %.2f]\n', config.focal_alpha(1), config.focal_alpha(2));
 fprintf('  Class weight multiplier: 1.25x for PTB\n');
 fprintf('  Focal gamma: %.2f\n', config.focal_gamma);
 fprintf('  Anatomical Guidance: %s (positivity: %s)\n', ...
     mat2str(loss_config.use_anatomical_guidance), ...
     mat2str(loss_config.anatomical_positivity));
-fprintf('  Samples per batch for anatomical loss: 32\n');
+fprintf('  Samples per batch for auxiliary CAM loss: %d\n', config.aux_samples_per_step);
 fprintf('  Learning Rate: %.4f (warmup: %d epochs, cosine annealing)\n', ...
     config.initialLearnRate, config.warmup_epochs);
 fprintf('  Gradient clipping norm: %.2f\n', loss_config.gradient_clip_norm);
 fprintf('  Batch Size: %d\n', config.batchSize);
+fprintf('  Auxiliary losses start at epoch: %d\n', config.aux_start_epoch);
+fprintf('  Auxiliary loss interval: every %d batches\n', config.aux_loss_interval);
+fprintf('  Auxiliary CAM samples per step: %d\n', config.aux_samples_per_step);
 fprintf('  Max Epochs: %d\n', config.numEpochs);
 fprintf('  Early Stopping Patience: %d\n\n', config.patience);
 
 %% Load Data and Network
 fprintf('Loading data and network...\n');
-forceRecalculate = true;
+forceRecalculate = false;
 [imds, vggNet, precomputedGradCAM, precomputedMasks, classes] = load_data_and_network(forceRecalculate, config.teacher_model_spec);
 fprintf('Dataset loaded: %d samples, %d classes\n\n', numel(imds.Files), numel(classes));
 
@@ -332,6 +340,11 @@ outputDir = fullfile('models', 'final');
 if ~exist(outputDir, 'dir')
     mkdir(outputDir);
 end
+diagnosticsDir = fullfile(outputDir, sprintf('diagnostics_%s_%s', ...
+    config.preprocessing_method, datestr(now, 'yyyy-mm-dd_HHMMSS')));
+if ~exist(diagnosticsDir, 'dir')
+    mkdir(diagnosticsDir);
+end
 modelFile = fullfile(outputDir, sprintf('final_model_%s_kfold_improved.mat', config.preprocessing_method));
 fprintf('Saving to: %s\n', modelFile);
 
@@ -391,12 +404,15 @@ if exist(cxrDir, 'dir')
 
     evaluation_suite = run_multi_case_evaluation_suite(trainedNet, imdsROI_val, imdsCXR, classes, config, refHist);
     mean_degradation = evaluation_suite.mean_degradation_cxr_roi;
+    evaluation_suite.diagnostics_dir = diagnosticsDir;
     results.ood_evaluation = evaluation_suite;
     results.evaluation_cases = evaluation_suite.case_results;
+    save_multi_case_diagnostics(evaluation_suite, diagnosticsDir, classes);
 
     save(modelFile, 'trainedNet', 'config', 'loss_config', 'training_histories', ...
         'results', 'best_models', 'foldIndices', '-v7.3');
     fprintf('\n  Multi-case evaluation results saved to model file.\n');
+    fprintf('  Score diagnostics saved to: %s\n', diagnosticsDir);
 else
     fprintf('  ⚠ Warning: CXR directory not found: %s\n', cxrDir);
     fprintf('  Skipping multi-case evaluation.\n');
@@ -749,7 +765,7 @@ bestValLoss = inf;
 bestValAcc = 0;
 patienceCounter = 0;
 featureLayer = 'relu5_3';
-nCam = 32;
+nCam = config.aux_samples_per_step;
 
 classCounts = countcats(imdsTrain.Labels);
 baseWeights = sum(classCounts) ./ (numel(classCounts) * classCounts);
@@ -810,13 +826,26 @@ while epoch < config.numEpochs
         training_history.lr(epoch) = lr;
         % ===================================================================
         
+        % Rework-inspired curriculum: keep early epochs mostly classification-only,
+        % and only trigger expensive auxiliary CAM losses on sparse batch intervals.
+        step_loss_config = loss_config;
+        if epoch < config.aux_start_epoch || mod(batch - 1, config.aux_loss_interval) ~= 0
+            step_loss_config.use_gradcam = false;
+            step_loss_config.use_segmentation = false;
+            step_loss_config.use_tversky = false;
+            step_loss_config.use_iou = false;
+            step_loss_config.use_anatomical_guidance = false;
+        end
+
         % Compute loss and gradients
         [loss, grads, state, loss_components] = dlfeval(@compute_loss_with_config_improved, ...
-            net, X, T, loss_config, classWeights, imdsTrain.Files, ...
+            net, X, T, step_loss_config, classWeights, imdsTrain.Files, ...
             preCAMs_train, preMasks_train, nCam, classes, featureLayer, config.useGPU, epoch, ...
             config.preprocessing_method, config.refHist);
         
-        net.State = state;
+        if istable(state) && all(ismember({'Layer','Parameter','Value'}, state.Properties.VariableNames))
+            net.State = state;
+        end
         
            % === IMPROVEMENT: Gradient clipping for stability (Version Compatible) ===
             if isfield(loss_config, 'gradient_clip_norm') && ~isempty(loss_config.gradient_clip_norm)
@@ -846,21 +875,21 @@ while epoch < config.numEpochs
         if mod(batch, 10) == 0 && batch <= 50
             fprintf('    Batch %d - Loss components: ', batch);
             fprintf('Cls=%.3f', double(loss_components.classification));
-            if loss_config.use_gradcam
+            if step_loss_config.use_gradcam
                 fprintf(', CAM=%.3f', double(loss_components.gradcam));
             end
-            if loss_config.use_tversky
+            if step_loss_config.use_tversky
                 fprintf(', Tversky=%.3f', double(loss_components.tversky));
             end
-            if loss_config.use_anatomical_guidance
+            if step_loss_config.use_anatomical_guidance
                 fprintf(', Anatomical=%.3f', double(loss_components.anatomical));
             end
             fprintf(', Total=%.3f\n', double(loss));
         end
     
         Y = predict(net, X);
-        Yscores = extractdata(Y);
-        Tscores = extractdata(T);
+        Yscores = extractdata(reshape_network_scores(Y, numClasses));
+        Tscores = extractdata(reshape_network_scores(T, numClasses));
         [~, predIdx] = max(Yscores, [], 1);
         [~, trueIdx] = max(Tscores, [], 1);
         trainCorrect = trainCorrect + sum(predIdx(:) == trueIdx(:));
@@ -879,7 +908,10 @@ while epoch < config.numEpochs
             config.useGPU, preCAMs_val, preMasks_val, loss_config, classWeights, config, epoch);
         
         [val_acc, cm_val] = evaluate_classification_full(net, imdsVal, classes, config.useGPU, config);
-        if isfield(config, 'fast_dev_mode') && config.fast_dev_mode
+        if isfield(config, 'enable_train_time_segmentation_eval') && ~config.enable_train_time_segmentation_eval
+            val_iou = NaN;
+            val_dice = NaN;
+        elseif isfield(config, 'fast_dev_mode') && config.fast_dev_mode
             val_iou = NaN;
             val_dice = NaN;
         else
@@ -947,21 +979,69 @@ training_history.lr = training_history.lr(1:epoch);
 training_history.epoch = training_history.epoch(1:epoch);
 end
 
-% === IMPROVEMENT: Enhanced loss computation with cosine similarity and positivity ===
+
 function [loss, grads, state, loss_components] = compute_loss_with_config_improved(...
     net, X, T, loss_config, classWeights, trainFiles, preCAMs, preMasks, ...
-    nCam, classes, featureLayer, useGPU, epoch, preprocessing_method, refHist)
+    nCam, classes, featureLayer, useGPU, epoch, preprocessing_method, refHist) %#ok<INUSD>
+%COMPUTE_LOSS_WITH_CONFIG_IMPROVED  Multi-task PTB distillation loss (PATCHED).
+%
+%   PATCH v2 (2026-05-21) — GRADIENT-FLOW FIX
+%   -----------------------------------------------------------------------
+%   Previous version called extractdata() on student-CAM tensors before
+%   feeding them into the auxiliary losses. That detached them from the
+%   autograd graph, making lambda_cam / lambda_tversky / lambda_anatomical
+%   cosmetic: dlgradient(loss, net.Learnables) only flowed through clsLoss.
+%   Symptom: OOD evaluation collapses (sens=0 or spec=0) because the model
+%   trained as pure CE on ROI crops.
+%
+%   This version:
+%     * Computes student CAMs via student_cam_differentiable, which keeps
+%       the dlarray tracked end to end (inner dlgradient with
+%       'EnableHigherDerivatives' = true).
+%     * Removes every extractdata on studCAM in the loss path.
+%     * Uses the GROUND-TRUTH class score for the CAM (not argmax) so
+%       attention transfer is honest on misclassified samples.
+%     * Initialises aux-loss accumulators as dlarray scalars so the
+%       running sums stay in the graph.
+%
+%   DROP-IN INSTRUCTIONS:
+%     Replace lines 984..1241 of final_working_mixed.m with this whole
+%     function body. Also ensure these helpers are on the MATLAB path:
+%       student_cam_differentiable.m
+%       label_index_from_path.m
+%     The existing helpers cam_cosine_loss, tversky_coefficient_dlarray,
+%     dice_coefficient_dlarray, iou_coefficient_dlarray, compute_focal_loss,
+%     reshape_network_scores and ensure_class_probabilities are reused
+%     unchanged.
 
-    % Initialize components
-    loss_components = struct('classification', 0, 'gradcam', 0, 'segmentation', 0, ...
-                             'tversky', 0, 'iou', 0, 'anatomical', 0);
+    % ------------------------------------------------------------------ %
+    % 0. Initialise component log (doubles, just for printf-level tracking)
+    % ------------------------------------------------------------------ %
+    loss_components = struct( ...
+        'classification', 0, ...
+        'gradcam',        0, ...
+        'segmentation',   0, ...
+        'tversky',        0, ...
+        'iou',            0, ...
+        'anatomical',     0);
 
-    % 1. Forward Pass for Classification
+    % ------------------------------------------------------------------ %
+    % 1. Forward pass for classification
+    % ------------------------------------------------------------------ %
     [Y, state] = forward(net, X);
-    
-    % Classification Loss
+    Y = reshape_network_scores(Y, size(T, 1));
+    Y = ensure_class_probabilities(Y);
+    if ~istable(state), state = []; end
+
+    % ------------------------------------------------------------------ %
+    % 2. Classification loss (CE or focal)
+    % ------------------------------------------------------------------ %
     if loss_config.use_focal
-        clsLoss = compute_focal_loss(Y, T, classWeights, ...
+        focalWeights = ones(size(classWeights), 'like', classWeights);
+        if isfield(loss_config, 'use_class_weights') && loss_config.use_class_weights
+            focalWeights = classWeights;
+        end
+        clsLoss = compute_focal_loss(Y, T, focalWeights, ...
             loss_config.focal_alpha, loss_config.focal_gamma);
     else
         if isfield(loss_config, 'use_class_weights') && loss_config.use_class_weights
@@ -972,263 +1052,214 @@ function [loss, grads, state, loss_components] = compute_loss_with_config_improv
     end
     loss_components.classification = clsLoss;
 
-    % Initialize auxiliary losses
-    camLoss = 0; segLoss = 0; tverskyLoss = 0; iouLoss = 0; anatomicalLoss = 0;
+    % ------------------------------------------------------------------ %
+    % 3. Initialise auxiliary-loss accumulators as TRACKED dlarray scalars.
+    %    Critical: if we used plain doubles here, the first '+= dlarray'
+    %    upcast would work but later 'camLoss / n' on a non-active path
+    %    could break. dlarray(0) up front avoids any ambiguity.
+    % ------------------------------------------------------------------ %
+    if useGPU
+        zeroDl = gpuArray(dlarray(single(0)));
+    else
+        zeroDl = dlarray(single(0));
+    end
+    camLoss        = zeroDl;
+    segLoss        = zeroDl;
+    tverskyLoss    = zeroDl;
+    iouLoss        = zeroDl;
+    anatomicalLoss = zeroDl;
 
-    % Check if any auxiliary loss is active
     hasAuxLoss = any([loss_config.use_gradcam, loss_config.use_segmentation, ...
-                      loss_config.use_tversky, loss_config.use_iou, ...
-                      loss_config.use_anatomical_guidance]);
+                     loss_config.use_tversky,  loss_config.use_iou, ...
+                     loss_config.use_anatomical_guidance]);
 
+    % ------------------------------------------------------------------ %
+    % 4. Auxiliary-loss pass (per-sample, with tracked student CAMs)
+    % ------------------------------------------------------------------ %
+    nActive = 0;
     if hasAuxLoss
         N = numel(trainFiles);
-        n = min(nCam, N); % Number of samples to sample for auxiliary loss
-        if N > 0
+        n = min(nCam, N);
+        if N > 0 && n > 0
             idxs = randperm(N, n);
         else
             idxs = [];
         end
 
-        % === OPTIMIZATION: Batch Process Student CAMs ===
-        % Instead of computing gradients per image in a loop, we compute them 
-        % for the whole subset at once.
-        
-        studentCAMs = cell(1, n);
-        targetCAMs_gpu = cell(1, n);
-        masks_gpu = cell(1, n);
-        
-        % Pre-load and prepare data for the subset
-        for ii = 1:n
+        for ii = 1:numel(idxs)
             idx = idxs(ii);
-            
-            % 1. Load Image & Preprocess (Must match training pipeline exactly)
-            img = imread(trainFiles{idx});
-            if size(img,3)==1, img = repmat(img,[1 1 3]); end
-            
-            % Apply preprocessing (ensure output is single precision)
+
+            % -- 4a. Load image, mirror the training preprocessing path -----
+            try
+                img = imread(trainFiles{idx});
+            catch
+                continue;
+            end
+            if size(img, 3) == 1, img = repmat(img, [1 1 3]); end
+
             img4d = reshape(img, size(img,1), size(img,2), size(img,3), 1);
             img4d = apply_preprocessing_batch(img4d, preprocessing_method, refHist);
-            img_resized = imresize(img4d(:,:,:,1), [224 224]); % Ensure 224x224
-            
-            % Convert to dlarray on GPU if needed
+            img_r = imresize(img4d(:,:,:,1), [224 224]);
+
             if useGPU
-                img_dl = dlarray(single(img_resized), 'SSCB');
-                img_dl = gpuArray(img_dl);
+                img_dl = gpuArray(dlarray(single(img_r), 'SSCB'));
             else
-                img_dl = dlarray(single(img_resized), 'SSCB');
+                img_dl = dlarray(single(img_r), 'SSCB');
             end
-            
-            % 2. Load Target CAM (Precomputed)
+
+            % -- 4b. Teacher CAM (target). Leaf dlarray; no gradient needed.
             targetCAM = preCAMs{idx};
             if isa(targetCAM, 'dlarray'), targetCAM = extractdata(targetCAM); end
             targetCAM = squeeze(single(targetCAM));
             if size(targetCAM,1) ~= 224 || size(targetCAM,2) ~= 224
                 targetCAM = imresize(targetCAM, [224 224]);
             end
-            % Normalize target to [0,1] to prevent scale mismatch
             t_max = max(targetCAM, [], 'all');
             if t_max > 0, targetCAM = targetCAM / t_max; end
-            
             if useGPU
-                targetCAMs_gpu{ii} = gpuArray(dlarray(targetCAM, 'SS'));
+                targetCAM_dl = gpuArray(dlarray(targetCAM, 'SS'));
             else
-                targetCAMs_gpu{ii} = dlarray(targetCAM, 'SS');
+                targetCAM_dl = dlarray(targetCAM, 'SS');
             end
 
-            % 3. Load Mask (Precomputed)
+            % -- 4c. Lung mask (leaf dlarray, no gradient) -------------------
             realMask = preMasks{idx};
-            if isempty(realMask)
-                masks_gpu{ii} = [];
-            else
+            haveMask = false;
+            mask_dl  = [];
+            if ~isempty(realMask)
                 if isa(realMask, 'dlarray'), realMask = extractdata(realMask); end
-                realMask = squeeze(single(realMask > 0.5)); % Binarize
+                realMask = squeeze(single(realMask > 0.5));
                 if size(realMask,1) ~= 224 || size(realMask,2) ~= 224
                     realMask = imresize(realMask, [224 224], 'nearest');
                 end
-                
-                if useGPU
-                    masks_gpu{ii} = gpuArray(dlarray(realMask, 'SS'));
-                else
-                    masks_gpu{ii} = dlarray(realMask, 'SS');
+                if any(realMask(:))
+                    if useGPU
+                        mask_dl = gpuArray(dlarray(realMask, 'SS'));
+                    else
+                        mask_dl = dlarray(realMask, 'SS');
+                    end
+                    haveMask = true;
                 end
             end
-            
-            % Store preprocessed image for batch gradient computation
-            if ii == 1
-                batchImages = img_dl;
-            else
-                batchImages = cat(4, batchImages, img_dl);
+
+            % -- 4d. Ground-truth class index for the CAM target score ------
+            gtIdx = label_index_from_path(trainFiles{idx}, classes);
+
+            % -- 4e. DIFFERENTIABLE STUDENT CAM (this is the fix) ----------
+            % studCAM stays as a tracked dlarray, 224x224, in [0,1].
+            studCAM = student_cam_differentiable(net, img_dl, featureLayer, gtIdx);
+            nActive = nActive + 1;
+
+            % -- 4f. GradCAM loss (cosine or MSE) ---------------------------
+            if loss_config.use_gradcam
+                if isfield(loss_config,'cam_loss_type') && ...
+                        strcmp(loss_config.cam_loss_type, 'cosine')
+                    camLoss = camLoss + cam_cosine_loss(studCAM, targetCAM_dl);
+                else
+                    camLoss = camLoss + mse(studCAM, targetCAM_dl);
+                end
+            end
+
+            % -- 4g. Segmentation / Tversky / IoU losses on lung mask ------
+            if haveMask
+                if loss_config.use_segmentation
+                    segLoss = segLoss + ...
+                        (1 - dice_coefficient_dlarray(studCAM, mask_dl));
+                end
+                if loss_config.use_tversky
+                    tCoef = tversky_coefficient_dlarray(studCAM, mask_dl, ...
+                        loss_config.tversky_alpha, loss_config.tversky_beta);
+                    tverskyLoss = tverskyLoss + (1 - tCoef);
+                end
+                if loss_config.use_iou
+                    iCoef = iou_coefficient_dlarray(studCAM, mask_dl);
+                    iouLoss = iouLoss + (1 - iCoef);
+                end
+            end
+
+            % -- 4h. Anatomical guidance (penalise CAM outside lung) -------
+            if haveMask && loss_config.use_anatomical_guidance
+                nonLungMask     = 1 - mask_dl;
+                penalty_outside = mean(studCAM .* nonLungMask, 'all');
+                reward_inside   = mean(studCAM .* mask_dl,     'all');
+                anat_sample = penalty_outside - ...
+                    loss_config.anatomical_reward_weight * reward_inside;
+                if isfield(loss_config,'anatomical_positivity') && ...
+                        loss_config.anatomical_positivity
+                    anat_sample = max(anat_sample, 0);
+                end
+                anatomicalLoss = anatomicalLoss + anat_sample;
             end
         end
-        
-        % === CRITICAL OPTIMIZATION: Compute ALL Student CAMs in ONE backward pass ===
-        if n > 0
-            % To guarantee stability and fix the "Zero Map" error, we will compute 
-            % student CAMs in a tight loop but WITHOUT file I/O or heavy preprocessing.
-            % The bottleneck was I/O, not the gradient math itself.
-            
-            for ii = 1:n
-                idx = idxs(ii);
-                img_dl = batchImages(:,:,:,:,ii); % Extract single from batch
-                
-                % Compute Student CAM for this specific image
-                [studCAM, ~] = compute_single_student_cam(net, img_dl, featureLayer, useGPU);
-                
-                % Robust Normalization to prevent Zero Maps
-                studCAM = extractdata(studCAM);
-                studCAM = squeeze(studCAM);
-                
-                s_min = min(studCAM, [], 'all');
-                s_max = max(studCAM, [], 'all');
-                
-                if (s_max - s_min) > eps
-                    studCAM = (studCAM - s_min) / (s_max - s_min + eps);
-                else
-                    studCAM = zeros(size(studCAM)); % Fallback if flat
-                end
-                
-                % Ensure non-zero minimum for loss stability
-                if max(studCAM, [], 'all') < eps
-                    studCAM = studCAM + 0.01; % Inject small noise
-                end
-                
-                if useGPU
-                    studentCAMs{ii} = gpuArray(dlarray(studCAM, 'SS'));
-                else
-                    studentCAMs{ii} = dlarray(studCAM, 'SS');
-                end
-                
-                % --- Calculate Losses immediately while data is ready ---
-                
-                % 1. GradCAM Loss
-                if loss_config.use_gradcam
-                    targetCAM = targetCAMs_gpu{ii};
-                    % Cosine similarity loss
-                    if isfield(loss_config, 'cam_loss_type') && strcmp(loss_config.cam_loss_type, 'cosine')
-                        camLoss = camLoss + cam_cosine_loss(studentCAMs{ii}, targetCAM);
-                    else
-                        camLoss = camLoss + mse(studentCAMs{ii}, targetCAM);
-                    end
-                end
-                
-                % 2. Segmentation/Tversky/IoU Losses
-                if any([loss_config.use_segmentation, loss_config.use_tversky, loss_config.use_iou])
-                    realMask = masks_gpu{ii};
-                    if ~isempty(realMask)
-                        if loss_config.use_segmentation
-                            segLoss = segLoss + (1 - dice_coefficient_dlarray(studentCAMs{ii}, realMask));
-                        end
-                        if loss_config.use_tversky
-                            tverskyCoef = tversky_coefficient_dlarray(studentCAMs{ii}, realMask, ...
-                                loss_config.tversky_alpha, loss_config.tversky_beta);
-                            tverskyLoss = tverskyLoss + (1 - tverskyCoef);
-                        end
-                        if loss_config.use_iou
-                            iouCoef = iou_coefficient_dlarray(studentCAMs{ii}, realMask);
-                            iouLoss = iouLoss + (1 - iouCoef);
-                        end
-                    end
-                end
-                
-                % 3. Anatomical Guidance Loss
-                if loss_config.use_anatomical_guidance
-                    realMask = masks_gpu{ii};
-                    if ~isempty(realMask) && max(extractdata(realMask), [], 'all') > 0.1
-                        lungMask = realMask > 0.5;
-                        nonLungMask = 1 - lungMask;
-                        
-                        % Normalize student CAM again just in case
-                        sCam_norm = studentCAMs{ii};
-                        s_max_local = max(sCam_norm, [], 'all');
-                        if s_max_local > 0
-                            sCam_norm = sCam_norm / s_max_local;
-                        end
-                        
-                        penalty_outside = mean(sCam_norm .* nonLungMask, 'all');
-                        reward_inside = mean(sCam_norm .* lungMask, 'all');
-                        
-                        anat_sample = penalty_outside - ...
-                            loss_config.anatomical_reward_weight * reward_inside;
-                        
-                        if isfield(loss_config, 'anatomical_positivity') && loss_config.anatomical_positivity
-                            anat_sample = max(anat_sample, 0);
-                        end
-                        
-                        % Fixed scaling factor (no adaptive instability)
-                        anatomicalLoss = anatomicalLoss + anat_sample; 
-                    end
-                end
-            end % End loop over samples
-            
-            % Average losses
-            camLoss = camLoss / n;
-            segLoss = segLoss / n;
-            tverskyLoss = tverskyLoss / n;
-            iouLoss = iouLoss / n;
-            anatomicalLoss = anatomicalLoss / n;
+
+        % Average across active samples (keeps dlarray graph alive).
+        if nActive > 0
+            camLoss        = camLoss        / nActive;
+            segLoss        = segLoss        / nActive;
+            tverskyLoss    = tverskyLoss    / nActive;
+            iouLoss        = iouLoss        / nActive;
+            anatomicalLoss = anatomicalLoss / nActive;
         end
     end
 
-    % Store components
-    loss_components.gradcam = camLoss;
+    % ------------------------------------------------------------------ %
+    % 5. Record components for logging
+    % ------------------------------------------------------------------ %
+    loss_components.gradcam      = camLoss;
     loss_components.segmentation = segLoss;
-    loss_components.tversky = tverskyLoss;
-    loss_components.iou = iouLoss;
-    loss_components.anatomical = anatomicalLoss;
+    loss_components.tversky      = tverskyLoss;
+    loss_components.iou          = iouLoss;
+    loss_components.anatomical   = anatomicalLoss;
 
-    % Total Weighted Loss
+    % ------------------------------------------------------------------ %
+    % 6. Total weighted loss
+    % ------------------------------------------------------------------ %
     loss = clsLoss;
     if loss_config.use_gradcam
         loss = loss + loss_config.lambda_cam * camLoss;
     end
-    if loss_config.use_segmentation
+    if loss_config.use_segmentation && isfield(loss_config, 'lambda_seg')
         loss = loss + loss_config.lambda_seg * segLoss;
     end
     if loss_config.use_tversky
         loss = loss + loss_config.lambda_tversky * tverskyLoss;
     end
-    if loss_config.use_iou
+    if loss_config.use_iou && isfield(loss_config, 'lambda_seg')
         loss = loss + loss_config.lambda_seg * iouLoss;
     end
     if loss_config.use_anatomical_guidance
         loss = loss + loss_config.lambda_anatomical * anatomicalLoss;
     end
 
-    % Compute Gradients for Backprop
+    % ------------------------------------------------------------------ %
+    % 7. Outer gradient w.r.t. net.Learnables.
+    %    EnableHigherDerivatives = true is REQUIRED because the inner
+    %    dlgradient inside student_cam_differentiable produces a
+    %    second-order computational graph.
+    % ------------------------------------------------------------------ %
     grads = dlgradient(loss, net.Learnables, 'EnableHigherDerivatives', true);
 end
 
-% Helper function to compute CAM for a single image efficiently
-function [cam, ~] = compute_single_student_cam(net, img_dl, featureLayerName, useGPU)
-    % 1. Forward pass to get predictions
-    Y = forward(net, img_dl);
-    [~, classIdx] = max(extractdata(Y), [], 1);
-    classIdx = classIdx(1); % Extract scalar
 
-    % 2. Get Feature Map
-    F = extract_layer_activation(net, img_dl, featureLayerName);
-    
-    % 3. Get Score for the predicted class
-    Y_pred = forward(net, img_dl);
-    score = Y_pred(classIdx);
-    
-    % 4. Compute Gradients of Score w.r.t Feature Map
-    [gradsF, F_val] = dlfeval(@getScoreAndFeat, net, img_dl, featureLayerName, classIdx);
-    
-    % Global Average Pooling of gradients
-    weights = mean(gradsF, [1, 2]); 
-    weights = reshape(weights, 1, 1, [], 1);
-    
-    % Weighted combination
-    cam_raw = sum(F_val .* weights, 3);
-    
-    % ReLU (only positive contributions)
-    cam = relu(cam_raw);
-    
+% Helper function to compute CAM for a single image efficiently
+function [cam, junk_state] = compute_single_student_cam(net, img_dl, featureLayerName, useGPU)
+    % Use the existing robust dlarray GradCAM helper and normalize shape.
+    junk_state = [];
+    cam_raw = student_cam_one_dlarray(net, img_dl, [], featureLayerName, useGPU);
+    cam_raw = extractdata(cam_raw);
+    cam_raw = squeeze(cam_raw);
+    while ndims(cam_raw) > 2
+        cam_raw = mean(cam_raw, ndims(cam_raw));
+    end
+    cam_raw = single(cam_raw);
+    if isempty(cam_raw)
+        cam_raw = zeros(224, 224, 'single');
+    end
+    cam_raw = dlarray(cam_raw, 'SS');
     if useGPU
-        cam = gpuArray(dlarray(extractdata(cam), 'SS'));
+        cam = gpuArray(cam_raw);
     else
-        cam = dlarray(extractdata(cam), 'SS');
+        cam = cam_raw;
     end
 end
 
@@ -1249,6 +1280,45 @@ function cam = normalize_cam(cam)
         cam = zeros(size(cam)) + 0.01;
     end
     cam = dlarray(cam, 'SS');
+end
+
+function feat = extract_layer_activation(net, img, layerName)
+    % Extract the intermediate activation for a given layer from a dlnetwork.
+    % Supports fallback to the last ReLU layer if the requested feature layer is missing.
+    if isa(net, 'dlnetwork')
+        try
+            feat = forward(net, img, 'Outputs', layerName);
+        catch
+            layerNames = {net.Layers.Name};
+            if any(strcmp(layerNames, layerName))
+                feat = forward(net, img, 'Outputs', layerName);
+            else
+                reluIdx = find(contains(lower(layerNames), 'relu'), 1, 'last');
+                if ~isempty(reluIdx)
+                    fallbackName = layerNames{reluIdx};
+                    fprintf('    [GradCAM] Falling back to feature layer: %s\n', fallbackName);
+                    feat = forward(net, img, 'Outputs', fallbackName);
+                else
+                    error('extract_layer_activation:NoValidFeatureLayer', ...
+                        'Unable to find feature layer ''%s'' in network.', layerName);
+                end
+            end
+        end
+    else
+        % Fallback for DAGNetwork or SeriesNetwork types
+        layerNames = {net.Layers.Name};
+        if ~any(strcmp(layerNames, layerName))
+            reluIdx = find(contains(lower(layerNames), 'relu'), 1, 'last');
+            if ~isempty(reluIdx)
+                layerName = layerNames{reluIdx};
+                fprintf('    [GradCAM] Falling back to feature layer: %s\n', layerName);
+            end
+        end
+        feat = activations(net, img, layerName, 'OutputAs','channels');
+        if ~isa(feat, 'dlarray')
+            feat = dlarray(single(feat), 'SSCB');
+        end
+    end
 end
 
 % === IMPROVEMENT: Cosine similarity loss for CAM alignment ===
@@ -1548,6 +1618,200 @@ function print_evaluation_case_report(~, caseMetrics, probabilitySummary, uncert
     end
 end
 
+function save_multi_case_diagnostics(evaluation_suite, diagnosticsDir, classes)
+    if ~exist(diagnosticsDir, 'dir')
+        mkdir(diagnosticsDir);
+    end
+
+    write_multi_case_metrics_csv(evaluation_suite, fullfile(diagnosticsDir, 'multi_case_metrics.csv'));
+    write_multi_case_calibration_csv(evaluation_suite, fullfile(diagnosticsDir, 'calibration_summary.csv'));
+    write_multi_case_predictions_csvs(evaluation_suite, diagnosticsDir);
+    save_multi_case_probability_figure(evaluation_suite, classes, ...
+        fullfile(diagnosticsDir, 'probability_diagnostics.png'));
+    save_multi_case_uncertainty_figure(evaluation_suite, classes, ...
+        fullfile(diagnosticsDir, 'uncertainty_diagnostics.png'));
+    save_multi_case_metric_figure(evaluation_suite, ...
+        fullfile(diagnosticsDir, 'case_metric_summary.png'));
+end
+
+function write_multi_case_metrics_csv(evaluation_suite, outPath)
+    fid = fopen(outPath, 'w');
+    if fid < 0
+        warning('Unable to write diagnostics CSV: %s', outPath);
+        return;
+    end
+
+    fprintf(fid, 'case_name,title,is_ood,use_dual_view,accuracy,precision,sensitivity,specificity,f1_score,auc,prob_mean,prob_median,pct_above_threshold,mean_uncertainty,std_uncertainty,high_uncertainty_pct,conservative_overrides\n');
+    caseNames = fieldnames(evaluation_suite.case_results);
+    for i = 1:numel(caseNames)
+        caseName = caseNames{i};
+        caseInfo = evaluation_suite.case_results.(caseName);
+        caseMetrics = caseInfo.results;
+        probSummary = evaluation_suite.probability_summaries.(caseName);
+        uncSummary = evaluation_suite.uncertainty_summaries.(caseName);
+        if ~isfield(uncSummary, 'conservative_overrides')
+            uncSummary.conservative_overrides = 0;
+        end
+        fprintf(fid, '%s,"%s",%d,%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%d\n', ...
+            caseName, caseInfo.title, caseInfo.is_ood_evaluation, caseInfo.use_dual_view, ...
+            caseMetrics.accuracy, caseMetrics.precision, caseMetrics.sensitivity, ...
+            caseMetrics.specificity, caseMetrics.f1_score, caseMetrics.auc, ...
+            probSummary.mean, probSummary.median, probSummary.pct_above_threshold, ...
+            uncSummary.mean_uncertainty, uncSummary.std_uncertainty, ...
+            uncSummary.high_uncertainty_pct, uncSummary.conservative_overrides);
+    end
+    fclose(fid);
+end
+
+function write_multi_case_calibration_csv(evaluation_suite, outPath)
+    fid = fopen(outPath, 'w');
+    if fid < 0
+        warning('Unable to write calibration CSV: %s', outPath);
+        return;
+    end
+    cal = evaluation_suite.calibration;
+    fprintf(fid, 'temperature,threshold_balanced,threshold_constrained,threshold_selected\n');
+    fprintf(fid, '%.6f,%.6f,%.6f,%.6f\n', ...
+        cal.temperature, cal.threshold_balanced, cal.threshold_constrained, cal.threshold_selected);
+    fclose(fid);
+end
+
+function write_multi_case_predictions_csvs(evaluation_suite, diagnosticsDir)
+    caseNames = fieldnames(evaluation_suite.case_results);
+    for i = 1:numel(caseNames)
+        caseName = caseNames{i};
+        caseInfo = evaluation_suite.case_results.(caseName);
+        write_single_case_predictions_csv( ...
+            caseInfo.predictions, fullfile(diagnosticsDir, sprintf('%s_predictions.csv', caseName)));
+    end
+end
+
+function write_single_case_predictions_csv(predictions, outPath)
+    fid = fopen(outPath, 'w');
+    if fid < 0
+        warning('Unable to write prediction CSV: %s', outPath);
+        return;
+    end
+
+    fprintf(fid, 'file,true_label,pred_label,positive_prob_raw,positive_prob_calibrated,uncertainty\n');
+    numRows = numel(predictions.Ypred);
+    for i = 1:numRows
+        if isfield(predictions, 'Files') && numel(predictions.Files) >= i
+            filePath = predictions.Files{i};
+        else
+            filePath = '';
+        end
+        trueLabel = char(string(predictions.Ytrue(i)));
+        predLabel = char(string(predictions.Ypred(i)));
+        if isfield(predictions, 'Yprobs_raw') && numel(predictions.Yprobs_raw) >= i
+            probRaw = predictions.Yprobs_raw(i);
+        else
+            probRaw = NaN;
+        end
+        fprintf(fid, '"%s",%s,%s,%.6f,%.6f,%.6f\n', ...
+            filePath, trueLabel, predLabel, probRaw, predictions.Yprobs(i), predictions.uncertainty(i));
+    end
+    fclose(fid);
+end
+
+function save_multi_case_probability_figure(evaluation_suite, classes, outPath)
+    caseNames = fieldnames(evaluation_suite.case_results);
+    threshold = evaluation_suite.decision_threshold;
+    posIdx = infer_positive_class_idx(classes);
+
+    fig = figure('Visible', 'off', 'Position', [100 100 1400 900]);
+    tiledlayout(2, 2, 'Padding', 'compact', 'TileSpacing', 'compact');
+
+    for i = 1:min(numel(caseNames), 4)
+        nexttile;
+        caseName = caseNames{i};
+        caseInfo = evaluation_suite.case_results.(caseName);
+        preds = caseInfo.predictions;
+        validMask = isfinite(preds.Yprobs);
+
+        if any(validMask)
+            truePosMask = validMask & preds.Ytrue == classes{posIdx};
+            trueNegMask = validMask & preds.Ytrue ~= classes{posIdx};
+            hold on;
+            if any(trueNegMask)
+                histogram(preds.Yprobs(trueNegMask), 18, 'FaceColor', [0.2 0.45 0.85], 'FaceAlpha', 0.55);
+            end
+            if any(truePosMask)
+                histogram(preds.Yprobs(truePosMask), 18, 'FaceColor', [0.90 0.35 0.20], 'FaceAlpha', 0.55);
+            end
+            if isfinite(threshold)
+                xline(threshold, 'k--', 'LineWidth', 1.2);
+            end
+            hold off;
+            xlabel(sprintf('P(%s)', classes{posIdx}));
+            ylabel('Count');
+            title(caseInfo.title, 'Interpreter', 'none');
+            legend({'True normal', 'True ptb', 'ID threshold'}, 'Location', 'best');
+        else
+            axis off;
+            text(0.1, 0.5, 'No probability data available.', 'FontSize', 12);
+            title(caseInfo.title, 'Interpreter', 'none');
+        end
+    end
+
+    saveas(fig, outPath);
+    close(fig);
+end
+
+function save_multi_case_uncertainty_figure(evaluation_suite, ~, outPath)
+    caseNames = fieldnames(evaluation_suite.case_results);
+    fig = figure('Visible', 'off', 'Position', [100 100 1400 900]);
+    tiledlayout(2, 2, 'Padding', 'compact', 'TileSpacing', 'compact');
+
+    for i = 1:min(numel(caseNames), 4)
+        nexttile;
+        caseName = caseNames{i};
+        caseInfo = evaluation_suite.case_results.(caseName);
+        preds = caseInfo.predictions;
+        if isfield(preds, 'uncertainty') && ~isempty(preds.uncertainty)
+            histogram(preds.uncertainty, 18, 'FaceColor', [0.30 0.65 0.35], 'FaceAlpha', 0.70);
+            xlabel('Uncertainty');
+            ylabel('Count');
+            title(caseInfo.title, 'Interpreter', 'none');
+        else
+            axis off;
+            text(0.1, 0.5, 'No uncertainty data available.', 'FontSize', 12);
+            title(caseInfo.title, 'Interpreter', 'none');
+        end
+    end
+
+    saveas(fig, outPath);
+    close(fig);
+end
+
+function save_multi_case_metric_figure(evaluation_suite, outPath)
+    caseNames = fieldnames(evaluation_suite.case_results);
+    metricNames = {'accuracy', 'sensitivity', 'specificity', 'auc'};
+    metricLabels = {'Accuracy', 'Sensitivity', 'Specificity', 'AUC'};
+    nCases = numel(caseNames);
+    values = nan(nCases, numel(metricNames));
+    labels = cell(nCases, 1);
+
+    for i = 1:nCases
+        caseInfo = evaluation_suite.case_results.(caseNames{i});
+        labels{i} = caseInfo.title;
+        for j = 1:numel(metricNames)
+            values(i, j) = caseInfo.results.(metricNames{j});
+        end
+    end
+
+    fig = figure('Visible', 'off', 'Position', [100 100 1200 700]);
+    bar(values);
+    ylim([0 1]);
+    grid on;
+    set(gca, 'XTick', 1:nCases, 'XTickLabel', labels, 'XTickLabelRotation', 20);
+    legend(metricLabels, 'Location', 'southoutside', 'Orientation', 'horizontal');
+    title('ROI-val vs Full-CXR Case Metrics');
+    ylabel('Score');
+    saveas(fig, outPath);
+    close(fig);
+end
+
 
 % === IMPROVEMENT: OOD evaluation with preprocessing ensemble ===
 function [results, predictions, uncertainty_stats] = evaluate_dataset_with_preprocessing_ensemble(...
@@ -1583,6 +1847,7 @@ reset(augDS);
 
 Ypred_ensemble = categorical.empty(0,1);
 Yprobs_ensemble = [];
+Yprobs_raw_ensemble = [];
 Ytrue = imds.Labels(:);
 uncertainty_values = [];
 
@@ -1618,7 +1883,8 @@ while hasdata(augDS)
             end
             sc_full = predict(net, dlarray(single(imgs_full) ./ 255, 'SSCB'));
             sc_roi = predict(net, dlarray(single(imgs_roi) ./ 255, 'SSCB'));
-            probs = 0.5 * extractdata(sc_full)' + 0.5 * extractdata(sc_roi)';
+            probs = 0.5 * extract_class_probs_batch(sc_full, numel(classes)) + ...
+                    0.5 * extract_class_probs_batch(sc_roi, numel(classes));
         else
             if is_ood_evaluation
                 [H, W, ~, B] = size(imgs);
@@ -1639,7 +1905,7 @@ while hasdata(augDS)
             end
             if useGPU, imgs_processed = gpuArray(imgs_processed); end
             sc = predict(net, dlarray(single(imgs_processed) ./ 255, 'SSCB'));
-            probs = extractdata(sc)';
+            probs = extract_class_probs_batch(sc, numel(classes));
         end
         
         % Accumulate probabilities
@@ -1648,6 +1914,11 @@ while hasdata(augDS)
     
     % Average probabilities across preprocessing methods
     probs_batch = probs_batch / numel(preprocessing_methods);
+    if numel(classes) == 2
+        Yprobs_raw_ensemble = [Yprobs_raw_ensemble; probs_batch(:, posIdx)];
+    else
+        Yprobs_raw_ensemble = [Yprobs_raw_ensemble; max(probs_batch, [], 2)];
+    end
     if numel(classes) == 2
         probs_batch(:, posIdx) = apply_binary_temperature(probs_batch(:, posIdx), temperature);
         negIdxTmp = 3 - posIdx;
@@ -1795,9 +2066,15 @@ results.auc = auc;
 results.confusion_matrix = cm;
 
 predictions = struct();
+predictions.Files = imds.Files(:);
 predictions.Ypred = Ypred_ensemble;
 predictions.Ytrue = Ytrue;
 predictions.Yprobs = Yprobs_ensemble;
+predictions.Yprobs_raw = Yprobs_raw_ensemble;
+predictions.temperature = temperature;
+predictions.decision_threshold = decisionThreshold;
+predictions.is_ood_evaluation = is_ood_evaluation;
+predictions.use_dual_view = use_dual_view;
 predictions.uncertainty = uncertainty_values;
 end
 
@@ -1816,11 +2093,17 @@ end
     % 1. Load teacher backbone weights
     modelPath = resolve_teacher_model_path(teacherModelSpec);
     fprintf('  Loading teacher backbone from: %s\n', modelPath);
-    s = load(modelPath);
-    if isfield(s, 'trainedNet'),   vggNet = s.trainedNet;
-    elseif isfield(s, 'fold_model'), vggNet = s.fold_model;
-    elseif isfield(s, 'net'),      vggNet = s.net;
-    else, error('Could not find network variable in %s', modelPath);
+    S = load(modelPath);
+    if isfield(S, 'teacherNet'),     vggNet = S.teacherNet;
+    elseif isfield(S, 'fold_model'), vggNet = S.fold_model;
+    elseif isfield(S, 'net'),        vggNet = S.net;
+    elseif isfield(S, 'trainedNet'), vggNet = S.trainedNet;
+    else
+        tLayers = getVGG16Layers(true);
+        tLayers = tLayers(1:end-3);
+        tLayers(end+1) = flattenLayer('Name', 'plat_flatten');
+        tLayers(end+1) = fullyConnectedLayer(numClasses, 'Name', 'fc_new');
+        vggNet = dlnetwork(tLayers);
     end
 
     % Convert to dlnetwork — forward() and dlgradient() require dlnetwork.
@@ -2193,13 +2476,14 @@ function [accuracy, precision, sensitivity, specificity, f1score, auc, ...
             dlX = X;
         end
         sc = predict(net, dlX);
-        lab = onehotdecode(extractdata(sc), classes, 1);
+        probs_batch = extract_class_probs_batch(sc, numel(classes));
+        [~, predIdx] = max(probs_batch, [], 2);
+        lab = categorical(classes(predIdx));
         Ypred = [Ypred; lab(:)];
-        probs_batch = extractdata(sc);
-        if size(probs_batch, 1) == 2
-            Yprobs = [Yprobs; probs_batch(posIdx,:)'];
+        if size(probs_batch, 2) == 2
+            Yprobs = [Yprobs; probs_batch(:, posIdx)];
         else
-            Yprobs = [Yprobs; probs_batch(1,:)'];
+            Yprobs = [Yprobs; probs_batch(:, 1)];
         end
     end
     Ytrue = imdsVal.Labels(:);
@@ -2448,9 +2732,9 @@ function valAcc = compute_validation_accuracy_simple(net, mbqVal, classes)
     while hasdata(mbqVal)
         [X, T] = next(mbqVal);
         Y = predict(net, X);
-        probs = extractdata(Y)';                      % [batch x numClasses]
+        probs = extract_class_probs_batch(Y, numel(classes));
         Yprobs = [Yprobs; probs(:, ptbIdx)];          %#ok<AGROW>
-        labels = onehotdecode(extractdata(T), classes, 1);
+        labels = decode_onehot_targets(T, classes);
         Ytrue_all = [Ytrue_all; labels(:)];           %#ok<AGROW>
     end
 
@@ -2500,6 +2784,69 @@ function posIdx = infer_positive_class_idx(classes)
     end
 end
 
+function scoresCB = reshape_network_scores(scores, numClasses)
+% Flatten network outputs to [classes x batch] for consistent loss/metric code.
+    if isa(scores, 'dlarray')
+        raw = stripdims(scores);
+    else
+        raw = scores;
+    end
+
+    if isempty(raw)
+        scoresCB = scores;
+        return;
+    end
+
+    if ndims(raw) == 2 && size(raw, 1) == numClasses
+        reshaped = raw;
+    elseif ndims(raw) == 2 && size(raw, 2) == numClasses
+        reshaped = raw';
+    else
+        batchSize = numel(raw) / numClasses;
+        reshaped = reshape(raw, [numClasses, batchSize]);
+    end
+
+    if isa(scores, 'dlarray')
+        scoresCB = dlarray(reshaped, 'CB');
+    else
+        scoresCB = reshaped;
+    end
+end
+
+function probsCB = ensure_class_probabilities(scoresCB)
+% Convert class scores to valid probabilities only when needed.
+% This keeps true softmax outputs unchanged, but fixes raw-logit outputs.
+    raw = gather(extractdata(scoresCB));
+    if isempty(raw)
+        probsCB = scoresCB;
+        return;
+    end
+
+    colSums = sum(raw, 1);
+    looksLikeProb = all(raw(:) >= -1e-6) && all(raw(:) <= 1 + 1e-6) && ...
+        max(abs(colSums - 1), [], 'all') < 1e-3;
+
+    if looksLikeProb
+        probsCB = min(max(scoresCB, 1e-7), 1 - 1e-7);
+    else
+        probsCB = softmax(scoresCB);
+    end
+end
+
+function probs = extract_class_probs_batch(scores, numClasses)
+% Return class probabilities as [batch x classes] on CPU for evaluation/reporting.
+    scoresCB = reshape_network_scores(scores, numClasses);
+    probsCB = ensure_class_probabilities(scoresCB);
+    probs = gather(extractdata(probsCB))';
+end
+
+function labels = decode_onehot_targets(T, classes)
+% Decode one-hot targets robustly without depending on onehotdecode tensor shape rules.
+    Tscores = gather(extractdata(reshape_network_scores(T, numel(classes))));
+    [~, trueIdx] = max(Tscores, [], 1);
+    labels = categorical(classes(trueIdx(:)));
+end
+
 function [val_acc, val_iou, val_dice] = evaluate_model_quick(net, imdsVal, classes, useGPU, ...
     precomputedGradCAM, precomputedMasks, featureLayer, config)
     try
@@ -2539,8 +2886,8 @@ function cm = compute_confusion_matrix_simple(net, imdsVal, classes, useGPU, con
         [X, ~] = next(mbqEval);
         if useGPU, X = gpuArray(X); end
         sc = predict(net, X);
-        probs = extractdata(sc);
-        [~, predIdx] = max(probs, [], 1);
+        probs = extract_class_probs_batch(sc, numel(classes));
+        [~, predIdx] = max(probs, [], 2);
         Ypred = [Ypred; categorical(classes(predIdx(:)))]; %#ok<AGROW>
     end
 
@@ -2562,8 +2909,8 @@ function [acc, cm] = evaluate_classification_full(net, imdsVal, classes, useGPU,
         [X, ~] = next(mbqEval);
         if useGPU, X = gpuArray(X); end
         sc = predict(net, X);
-        probs = extractdata(sc);
-        [~, predIdx] = max(probs, [], 1);
+        probs = extract_class_probs_batch(sc, numel(classes));
+        [~, predIdx] = max(probs, [], 2);
         Ypred = [Ypred; categorical(classes(predIdx(:)))]; %#ok<AGROW>
     end
 
@@ -2576,9 +2923,15 @@ function [loss, grads, state, loss_components] = compute_loss_with_config(...
     net, X, T, loss_config, classWeights, trainFiles, preCAMs, preMasks, ...
     nCam, classes, featureLayer, useGPU)
 [Y, state] = forward(net, X);
+Y = reshape_network_scores(Y, size(T, 1));
+Y = ensure_class_probabilities(Y);
 loss_components = struct();
 if loss_config.use_focal
-    clsLoss = compute_focal_loss(Y, T, classWeights, ...
+    focalWeights = ones(size(classWeights), 'like', classWeights);
+    if isfield(loss_config, 'use_class_weights') && loss_config.use_class_weights
+        focalWeights = classWeights;
+    end
+    clsLoss = compute_focal_loss(Y, T, focalWeights, ...
         loss_config.focal_alpha, loss_config.focal_gamma);
 else
     if isfield(loss_config, 'use_class_weights') && loss_config.use_class_weights
@@ -2912,7 +3265,11 @@ try
     cam = max(cam, 0);                    % ReLU
 
     cam = extractdata(cam);
-    cam = imresize(single(cam), [224 224]);;
+    cam = squeeze(cam);
+    while ndims(cam) > 2
+        cam = mean(cam, ndims(cam));
+    end
+    cam = imresize(single(cam), [224 224]);
 
     maxVal = max(cam(:));
     if maxVal > 1e-6
@@ -2940,13 +3297,20 @@ precomputedGradCAM, precomputedMasks, loss_config, classWeights, config, epoch)
         'PartialMiniBatch', 'discard');
 
     valLoss = 0; valCount = 0; valFilesForGradCAM = imdsVal.Files;
+    val_loss_config = loss_config;
+    val_loss_config.use_gradcam = false;
+    val_loss_config.use_segmentation = false;
+    val_loss_config.use_tversky = false;
+    val_loss_config.use_iou = false;
+    val_loss_config.use_anatomical_guidance = false;
 
     while hasdata(mbqVal)
         [X, T] = next(mbqVal);
         if useGPU, X = gpuArray(X); end
         try
-            % Call the IMPROVED loss function with epoch
-            [loss, ~, ~, ~] = dlfeval(@compute_loss_with_config_improved, net, X, T, loss_config, classWeights, ...
+            % Validation loss is classification-only; expensive CAM-based terms are
+            % tracked by final evaluation, not by the in-training loop.
+            [loss, ~, ~, ~] = dlfeval(@compute_loss_with_config_improved, net, X, T, val_loss_config, classWeights, ...
                 valFilesForGradCAM, precomputedGradCAM, precomputedMasks, 8, classes, 'relu5_3', useGPU, epoch, ...
                 config.preprocessing_method, config.refHist);
             valLoss = valLoss + double(loss);

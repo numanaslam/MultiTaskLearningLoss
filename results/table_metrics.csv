@@ -1,0 +1,3 @@
+dataset,accuracy,auc,ap,ece,energy_ratio_mean,pointing_game,ts_cosine
+Fold-Val (ID),0.8938,0.9269,NaN,0.1023,0.6514,0.7611,0.4079
+Held-out TEST,0.8673,0.9555,NaN,0.1339,0.6508,0.7788,0.4298

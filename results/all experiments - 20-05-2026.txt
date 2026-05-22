@@ -1,0 +1,576 @@
+CE only
+
+CONFIG.LOSS_WEIGHTS.classification = 1.0;
+CONFIG.LOSS_WEIGHTS.kd = 0.0;
+CONFIG.LOSS_WEIGHTS.gradcam = 0.0;
+CONFIG.LOSS_WEIGHTS.tversky = 0.0;
+CONFIG.KD_START_EPOCH = CONFIG.EPOCHS + 1;
+CONFIG.AUX_START_EPOCH = CONFIG.EPOCHS + 1;
+
+
+=== Loading Data from Structured Folders ===
+Found 566 images. Classes: normal, ptb
+Mapping masks...
+Creating 2-fold stratified splits...
+  Teacher sanity check — max prob: 0.947 (>0.6 = trained, ~0.5 = random)Initializing Student Network (VGG16 Logit Mode)...
+Using GPU: NVIDIA GeForce RTX 3070
+Using feature layer: relu5_3
+
+=== STARTING K-FOLD MULTI-TASK CV LOOP ===
+
+--- Fold 1/2 ---
+Epoch 1/30 - Loss: 0.9164 | Train Acc: 59.60% | Val Acc: 68.66% | (8.12s)
+  -> Breakdowns: CE=0.916, KD=0.842, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [215 68] | Val True Counts: [139 144]
+Epoch 2/30 - Loss: 0.4043 | Train Acc: 81.44% | Val Acc: 63.54% | (7.44s)
+  -> Breakdowns: CE=0.404, KD=0.927, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [36 247] | Val True Counts: [139 144]
+Epoch 3/30 - Loss: 0.4840 | Train Acc: 80.21% | Val Acc: 83.55% | (7.53s)
+  -> Breakdowns: CE=0.484, KD=1.173, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [155 128] | Val True Counts: [139 144]
+Epoch 4/30 - Loss: 0.2175 | Train Acc: 94.63% | Val Acc: 84.22% | (7.40s)
+  -> Breakdowns: CE=0.217, KD=1.702, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [130 153] | Val True Counts: [139 144]
+Epoch 5/30 - Loss: 0.2301 | Train Acc: 92.90% | Val Acc: 80.21% | (7.52s)
+  -> Breakdowns: CE=0.230, KD=2.675, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [94 189] | Val True Counts: [139 144]
+Epoch 6/30 - Loss: 0.1499 | Train Acc: 95.86% | Val Acc: 82.48% | (7.44s)
+  -> Breakdowns: CE=0.150, KD=2.571, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [117 166] | Val True Counts: [139 144]
+Epoch 7/30 - Loss: 0.1073 | Train Acc: 96.88% | Val Acc: 80.56% | (7.53s)
+  -> Breakdowns: CE=0.107, KD=3.301, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [93 190] | Val True Counts: [139 144]
+Epoch 8/30 - Loss: 0.0717 | Train Acc: 97.92% | Val Acc: 85.26% | (7.43s)
+  -> Breakdowns: CE=0.072, KD=3.893, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [129 154] | Val True Counts: [139 144]
+Epoch 9/30 - Loss: 0.0323 | Train Acc: 99.31% | Val Acc: 86.49% | (7.50s)
+  -> Breakdowns: CE=0.032, KD=4.615, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [153 130] | Val True Counts: [139 144]
+Epoch 10/30 - Loss: 0.0685 | Train Acc: 97.57% | Val Acc: 83.71% | (7.42s)
+  -> Breakdowns: CE=0.068, KD=4.370, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [173 110] | Val True Counts: [139 144]
+Epoch 11/30 - Loss: 0.0413 | Train Acc: 98.45% | Val Acc: 87.15% | (7.51s)
+  -> Breakdowns: CE=0.041, KD=4.546, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [126 157] | Val True Counts: [139 144]
+Epoch 12/30 - Loss: 0.0254 | Train Acc: 99.65% | Val Acc: 82.32% | (7.42s)
+  -> Breakdowns: CE=0.025, KD=5.054, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [165 118] | Val True Counts: [139 144]
+Epoch 13/30 - Loss: 0.0004 | Train Acc: 100.00% | Val Acc: 86.30% | (7.51s)
+  -> Breakdowns: CE=0.000, KD=5.429, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [140 143] | Val True Counts: [139 144]
+Epoch 14/30 - Loss: 0.0041 | Train Acc: 99.65% | Val Acc: 85.45% | (7.41s)
+  -> Breakdowns: CE=0.004, KD=5.451, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [132 151] | Val True Counts: [139 144]
+Epoch 15/30 - Loss: 0.0002 | Train Acc: 100.00% | Val Acc: 79.17% | (7.49s)
+  -> Breakdowns: CE=0.000, KD=5.920, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [87 196] | Val True Counts: [139 144]
+Epoch 16/30 - Loss: 0.0632 | Train Acc: 98.96% | Val Acc: 85.95% | (7.40s)
+  -> Breakdowns: CE=0.063, KD=6.214, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [129 154] | Val True Counts: [139 144]
+Epoch 17/30 - Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 86.49% | (7.47s)
+  -> Breakdowns: CE=0.000, KD=5.829, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [143 140] | Val True Counts: [139 144]
+Early stopping triggered on fold 1 at epoch 17 (best val acc 87.15%)
+
+--- Fold 2/2 ---
+Epoch 1/30 - Loss: 0.9054 | Train Acc: 54.73% | Val Acc: 78.69% | (7.70s)
+  -> Breakdowns: CE=0.905, KD=0.774, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [110 173] | Val True Counts: [140 143]
+Epoch 2/30 - Loss: 0.5981 | Train Acc: 72.98% | Val Acc: 71.53% | (7.52s)
+  -> Breakdowns: CE=0.598, KD=0.822, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [60 223] | Val True Counts: [140 143]
+Epoch 3/30 - Loss: 0.3721 | Train Acc: 84.06% | Val Acc: 84.22% | (7.45s)
+  -> Breakdowns: CE=0.372, KD=1.025, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [119 164] | Val True Counts: [140 143]
+Epoch 4/30 - Loss: 0.4824 | Train Acc: 80.46% | Val Acc: 72.22% | (7.50s)
+  -> Breakdowns: CE=0.482, KD=1.351, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [64 219] | Val True Counts: [140 143]
+Epoch 5/30 - Loss: 0.2580 | Train Acc: 88.38% | Val Acc: 85.98% | (7.46s)
+  -> Breakdowns: CE=0.258, KD=1.213, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [147 136] | Val True Counts: [140 143]
+Epoch 6/30 - Loss: 0.3517 | Train Acc: 86.81% | Val Acc: 83.74% | (7.50s)
+  -> Breakdowns: CE=0.352, KD=1.952, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [151 132] | Val True Counts: [140 143]
+Epoch 7/30 - Loss: 0.0417 | Train Acc: 98.61% | Val Acc: 86.68% | (7.42s)
+  -> Breakdowns: CE=0.042, KD=2.590, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [161 122] | Val True Counts: [140 143]
+Epoch 8/30 - Loss: 0.0423 | Train Acc: 98.96% | Val Acc: 78.82% | (7.51s)
+  -> Breakdowns: CE=0.042, KD=3.814, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [83 200] | Val True Counts: [140 143]
+Epoch 9/30 - Loss: 0.1134 | Train Acc: 95.83% | Val Acc: 76.04% | (7.42s)
+  -> Breakdowns: CE=0.113, KD=3.493, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [73 210] | Val True Counts: [140 143]
+Epoch 10/30 - Loss: 0.0725 | Train Acc: 98.26% | Val Acc: 84.60% | (7.46s)
+  -> Breakdowns: CE=0.073, KD=3.772, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [155 128] | Val True Counts: [140 143]
+Epoch 11/30 - Loss: 0.0052 | Train Acc: 99.65% | Val Acc: 82.29% | (7.40s)
+  -> Breakdowns: CE=0.005, KD=4.599, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [109 174] | Val True Counts: [140 143]
+Epoch 12/30 - Loss: 0.0335 | Train Acc: 99.31% | Val Acc: 86.30% | (7.45s)
+  -> Breakdowns: CE=0.034, KD=5.075, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [129 154] | Val True Counts: [140 143]
+Epoch 13/30 - Loss: 0.0647 | Train Acc: 98.96% | Val Acc: 80.97% | (7.42s)
+  -> Breakdowns: CE=0.065, KD=4.692, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 14/30 - Loss: 0.0005 | Train Acc: 100.00% | Val Acc: 85.76% | (7.43s)
+  -> Breakdowns: CE=0.001, KD=4.572, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [127 156] | Val True Counts: [140 143]
+Epoch 15/30 - Loss: 0.0074 | Train Acc: 99.65% | Val Acc: 84.94% | (7.46s)
+  -> Breakdowns: CE=0.007, KD=4.944, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [142 141] | Val True Counts: [140 143]
+Epoch 16/30 - Loss: 0.0000 | Train Acc: 100.00% | Val Acc: 85.64% | (7.41s)
+  -> Breakdowns: CE=0.000, KD=5.130, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [148 135] | Val True Counts: [140 143]
+Early stopping triggered on fold 2 at epoch 16 (best val acc 86.68%)
+
+=== RUNNING PILOT UNCERTAINTY OOD EVALUATION ===
+Resulting Diagnostics: Class Assignment ID = 2 | Confidence Entropy = 0.5336 | flagOOD = 0
+>> 
+
+
+CE + Tversky only
+
+CONFIG.LOSS_WEIGHTS.kd = 0.0;
+CONFIG.LOSS_WEIGHTS.gradcam = 0.0;
+CONFIG.LOSS_WEIGHTS.tversky = 0.05;
+CONFIG.AUX_START_EPOCH = 8;
+CONFIG.AUX_RAMP_EPOCHS = 4;
+
+=== Loading Data from Structured Folders ===
+Found 566 images. Classes: normal, ptb
+Mapping masks...
+Creating 2-fold stratified splits...
+  Teacher sanity check — max prob: 0.947 (>0.6 = trained, ~0.5 = random)Initializing Student Network (VGG16 Logit Mode)...
+Using GPU: NVIDIA GeForce RTX 3070
+Using feature layer: relu5_3
+
+=== STARTING K-FOLD MULTI-TASK CV LOOP ===
+
+--- Fold 1/2 ---
+Epoch 1/30 - Loss: 0.8074 | Train Acc: 63.60% | Val Acc: 76.14% | (8.19s)
+  -> Breakdowns: CE=0.807, KD=0.855, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [185 98] | Val True Counts: [139 144]
+Epoch 2/30 - Loss: 0.4822 | Train Acc: 79.55% | Val Acc: 54.51% | (7.52s)
+  -> Breakdowns: CE=0.482, KD=1.066, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [10 273] | Val True Counts: [139 144]
+Epoch 3/30 - Loss: 0.4295 | Train Acc: 80.40% | Val Acc: 81.44% | (7.42s)
+  -> Breakdowns: CE=0.430, KD=1.079, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [110 173] | Val True Counts: [139 144]
+Epoch 4/30 - Loss: 0.2378 | Train Acc: 91.51% | Val Acc: 78.72% | (7.52s)
+  -> Breakdowns: CE=0.238, KD=1.299, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [180 103] | Val True Counts: [139 144]
+Epoch 5/30 - Loss: 0.1197 | Train Acc: 95.14% | Val Acc: 80.90% | (7.43s)
+  -> Breakdowns: CE=0.120, KD=1.762, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [102 181] | Val True Counts: [139 144]
+Epoch 6/30 - Loss: 0.1342 | Train Acc: 94.29% | Val Acc: 76.39% | (7.53s)
+  -> Breakdowns: CE=0.134, KD=2.484, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [87 196] | Val True Counts: [139 144]
+Epoch 7/30 - Loss: 0.1177 | Train Acc: 95.83% | Val Acc: 83.02% | (7.40s)
+  -> Breakdowns: CE=0.118, KD=3.071, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [141 142] | Val True Counts: [139 144]
+Epoch 8/30 - Loss: 0.0965 | Train Acc: 97.22% | Val Acc: 77.08% | (7.54s)
+  -> Breakdowns: CE=0.097, KD=3.967, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [91 192] | Val True Counts: [139 144]
+Epoch 9/30 - Loss: 0.1108 | Train Acc: 97.25% | Val Acc: 83.71% | (7.68s)
+  -> Breakdowns: CE=0.101, KD=3.856, Tversky=0.773, CAM_Align=0.000
+  -> Val Pred Counts: [167 116] | Val True Counts: [139 144]
+Epoch 10/30 - Loss: 0.1098 | Train Acc: 97.57% | Val Acc: 81.60% | (7.68s)
+  -> Breakdowns: CE=0.091, KD=4.730, Tversky=0.745, CAM_Align=0.000
+  -> Val Pred Counts: [108 175] | Val True Counts: [139 144]
+Epoch 11/30 - Loss: 0.0382 | Train Acc: 99.65% | Val Acc: 85.10% | (7.58s)
+  -> Breakdowns: CE=0.012, KD=5.263, Tversky=0.704, CAM_Align=0.000
+  -> Val Pred Counts: [151 132] | Val True Counts: [139 144]
+Epoch 12/30 - Loss: 0.0700 | Train Acc: 98.96% | Val Acc: 86.49% | (7.65s)
+  -> Breakdowns: CE=0.039, KD=5.920, Tversky=0.614, CAM_Align=0.000
+  -> Val Pred Counts: [163 120] | Val True Counts: [139 144]
+Epoch 13/30 - Loss: 0.0573 | Train Acc: 99.31% | Val Acc: 86.49% | (7.60s)
+  -> Breakdowns: CE=0.027, KD=5.612, Tversky=0.602, CAM_Align=0.000
+  -> Val Pred Counts: [143 140] | Val True Counts: [139 144]
+Epoch 14/30 - Loss: 0.2627 | Train Acc: 96.88% | Val Acc: 61.11% | (7.71s)
+  -> Breakdowns: CE=0.236, KD=5.667, Tversky=0.538, CAM_Align=0.000
+  -> Val Pred Counts: [29 254] | Val True Counts: [139 144]
+Epoch 15/30 - Loss: 0.2498 | Train Acc: 97.22% | Val Acc: 83.71% | (7.57s)
+  -> Breakdowns: CE=0.221, KD=5.344, Tversky=0.578, CAM_Align=0.000
+  -> Val Pred Counts: [167 116] | Val True Counts: [139 144]
+Epoch 16/30 - Loss: 0.0384 | Train Acc: 99.31% | Val Acc: 85.42% | (7.67s)
+  -> Breakdowns: CE=0.011, KD=5.450, Tversky=0.549, CAM_Align=0.000
+  -> Val Pred Counts: [133 150] | Val True Counts: [139 144]
+Epoch 17/30 - Loss: 0.0272 | Train Acc: 100.00% | Val Acc: 81.94% | (7.57s)
+  -> Breakdowns: CE=0.001, KD=6.681, Tversky=0.515, CAM_Align=0.000
+  -> Val Pred Counts: [103 180] | Val True Counts: [139 144]
+Epoch 18/30 - Loss: 0.0820 | Train Acc: 98.61% | Val Acc: 87.18% | (7.68s)
+  -> Breakdowns: CE=0.058, KD=6.488, Tversky=0.488, CAM_Align=0.000
+  -> Val Pred Counts: [149 134] | Val True Counts: [139 144]
+Epoch 19/30 - Loss: 0.0236 | Train Acc: 100.00% | Val Acc: 86.14% | (7.58s)
+  -> Breakdowns: CE=0.000, KD=6.720, Tversky=0.471, CAM_Align=0.000
+  -> Val Pred Counts: [152 131] | Val True Counts: [139 144]
+Epoch 20/30 - Loss: 0.0232 | Train Acc: 100.00% | Val Acc: 86.99% | (7.64s)
+  -> Breakdowns: CE=0.000, KD=6.415, Tversky=0.460, CAM_Align=0.000
+  -> Val Pred Counts: [136 147] | Val True Counts: [139 144]
+Epoch 21/30 - Loss: 0.0230 | Train Acc: 100.00% | Val Acc: 86.99% | (7.72s)
+  -> Breakdowns: CE=0.000, KD=6.478, Tversky=0.459, CAM_Align=0.000
+  -> Val Pred Counts: [138 145] | Val True Counts: [139 144]
+Epoch 22/30 - Loss: 0.0313 | Train Acc: 99.65% | Val Acc: 85.95% | (7.64s)
+  -> Breakdowns: CE=0.008, KD=6.508, Tversky=0.456, CAM_Align=0.000
+  -> Val Pred Counts: [131 152] | Val True Counts: [139 144]
+Epoch 23/30 - Loss: 0.0223 | Train Acc: 100.00% | Val Acc: 86.49% | (7.53s)
+  -> Breakdowns: CE=0.000, KD=6.651, Tversky=0.445, CAM_Align=0.000
+  -> Val Pred Counts: [143 140] | Val True Counts: [139 144]
+Epoch 24/30 - Loss: 0.0225 | Train Acc: 100.00% | Val Acc: 86.14% | (7.63s)
+  -> Breakdowns: CE=0.000, KD=6.950, Tversky=0.450, CAM_Align=0.000
+  -> Val Pred Counts: [144 139] | Val True Counts: [139 144]
+Early stopping triggered on fold 1 at epoch 24 (best val acc 87.18%)
+
+--- Fold 2/2 ---
+Epoch 1/30 - Loss: 1.0178 | Train Acc: 62.56% | Val Acc: 73.11% | (7.65s)
+  -> Breakdowns: CE=1.018, KD=0.872, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [75 208] | Val True Counts: [140 143]
+Epoch 2/30 - Loss: 0.6378 | Train Acc: 70.52% | Val Acc: 75.69% | (7.56s)
+  -> Breakdowns: CE=0.638, KD=0.880, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [90 193] | Val True Counts: [140 143]
+Epoch 3/30 - Loss: 0.3933 | Train Acc: 83.33% | Val Acc: 84.56% | (7.43s)
+  -> Breakdowns: CE=0.393, KD=0.932, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [120 163] | Val True Counts: [140 143]
+Epoch 4/30 - Loss: 0.2544 | Train Acc: 89.11% | Val Acc: 82.70% | (7.56s)
+  -> Breakdowns: CE=0.254, KD=1.358, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [174 109] | Val True Counts: [140 143]
+Epoch 5/30 - Loss: 0.1568 | Train Acc: 94.79% | Val Acc: 83.90% | (7.48s)
+  -> Breakdowns: CE=0.157, KD=1.818, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 6/30 - Loss: 0.3534 | Train Acc: 89.61% | Val Acc: 71.28% | (7.58s)
+  -> Breakdowns: CE=0.353, KD=2.643, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [214 69] | Val True Counts: [140 143]
+Epoch 7/30 - Loss: 0.1331 | Train Acc: 94.10% | Val Acc: 85.80% | (7.43s)
+  -> Breakdowns: CE=0.133, KD=2.382, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [146 137] | Val True Counts: [140 143]
+Epoch 8/30 - Loss: 0.1073 | Train Acc: 98.26% | Val Acc: 88.73% | (7.51s)
+  -> Breakdowns: CE=0.107, KD=3.339, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [140 143] | Val True Counts: [140 143]
+Epoch 9/30 - Loss: 0.1091 | Train Acc: 97.41% | Val Acc: 87.53% | (7.59s)
+  -> Breakdowns: CE=0.099, KD=3.383, Tversky=0.819, CAM_Align=0.000
+  -> Val Pred Counts: [135 148] | Val True Counts: [140 143]
+Epoch 10/30 - Loss: 0.0642 | Train Acc: 98.96% | Val Acc: 89.24% | (7.65s)
+  -> Breakdowns: CE=0.045, KD=4.035, Tversky=0.787, CAM_Align=0.000
+  -> Val Pred Counts: [127 156] | Val True Counts: [140 143]
+Epoch 11/30 - Loss: 0.0825 | Train Acc: 98.61% | Val Acc: 85.98% | (7.55s)
+  -> Breakdowns: CE=0.054, KD=4.640, Tversky=0.746, CAM_Align=0.000
+  -> Val Pred Counts: [161 122] | Val True Counts: [140 143]
+Epoch 12/30 - Loss: 0.0853 | Train Acc: 97.76% | Val Acc: 85.42% | (7.66s)
+  -> Breakdowns: CE=0.051, KD=4.962, Tversky=0.688, CAM_Align=0.000
+  -> Val Pred Counts: [114 169] | Val True Counts: [140 143]
+Epoch 13/30 - Loss: 0.1101 | Train Acc: 98.11% | Val Acc: 86.84% | (7.58s)
+  -> Breakdowns: CE=0.078, KD=5.126, Tversky=0.640, CAM_Align=0.000
+  -> Val Pred Counts: [149 134] | Val True Counts: [140 143]
+Epoch 14/30 - Loss: 0.0290 | Train Acc: 100.00% | Val Acc: 83.90% | (7.67s)
+  -> Breakdowns: CE=0.001, KD=6.046, Tversky=0.564, CAM_Align=0.000
+  -> Val Pred Counts: [169 114] | Val True Counts: [140 143]
+Epoch 15/30 - Loss: 0.1547 | Train Acc: 97.92% | Val Acc: 88.57% | (7.54s)
+  -> Breakdowns: CE=0.128, KD=5.921, Tversky=0.539, CAM_Align=0.000
+  -> Val Pred Counts: [158 125] | Val True Counts: [140 143]
+Epoch 16/30 - Loss: 0.0881 | Train Acc: 99.31% | Val Acc: 85.07% | (7.62s)
+  -> Breakdowns: CE=0.063, KD=6.078, Tversky=0.509, CAM_Align=0.000
+  -> Val Pred Counts: [113 170] | Val True Counts: [140 143]
+Early stopping triggered on fold 2 at epoch 16 (best val acc 89.24%)
+
+=== RUNNING PILOT UNCERTAINTY OOD EVALUATION ===
+Resulting Diagnostics: Class Assignment ID = 2 | Confidence Entropy = 0.1137 | flagOOD = 0
+>> 
+
+CE + GradCAM only
+
+
+CONFIG.LOSS_WEIGHTS.kd = 0.0;
+CONFIG.LOSS_WEIGHTS.gradcam = 0.01;
+CONFIG.LOSS_WEIGHTS.tversky = 0.0;
+CONFIG.AUX_START_EPOCH = 8;
+CONFIG.AUX_RAMP_EPOCHS = 4;
+
+
+=== Loading Data from Structured Folders ===
+Found 566 images. Classes: normal, ptb
+Mapping masks...
+Creating 2-fold stratified splits...
+  Teacher sanity check — max prob: 0.947 (>0.6 = trained, ~0.5 = random)Initializing Student Network (VGG16 Logit Mode)...
+Using GPU: NVIDIA GeForce RTX 3070
+Using feature layer: relu5_3
+
+=== STARTING K-FOLD MULTI-TASK CV LOOP ===
+
+--- Fold 1/2 ---
+Epoch 1/30 - Loss: 0.9854 | Train Acc: 61.87% | Val Acc: 72.98% | (8.12s)
+  -> Breakdowns: CE=0.985, KD=0.832, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [201 82] | Val True Counts: [139 144]
+Epoch 2/30 - Loss: 0.4761 | Train Acc: 76.42% | Val Acc: 64.24% | (7.49s)
+  -> Breakdowns: CE=0.476, KD=1.008, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [38 245] | Val True Counts: [139 144]
+Epoch 3/30 - Loss: 0.5197 | Train Acc: 80.90% | Val Acc: 84.06% | (7.48s)
+  -> Breakdowns: CE=0.520, KD=1.351, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [146 137] | Val True Counts: [139 144]
+Epoch 4/30 - Loss: 0.2641 | Train Acc: 88.04% | Val Acc: 87.34% | (7.42s)
+  -> Breakdowns: CE=0.264, KD=1.357, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [139 144] | Val True Counts: [139 144]
+Epoch 5/30 - Loss: 0.2540 | Train Acc: 89.27% | Val Acc: 81.28% | (7.46s)
+  -> Breakdowns: CE=0.254, KD=1.604, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [172 111] | Val True Counts: [139 144]
+Epoch 6/30 - Loss: 0.0658 | Train Acc: 97.57% | Val Acc: 85.61% | (7.48s)
+  -> Breakdowns: CE=0.066, KD=2.405, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [168 115] | Val True Counts: [139 144]
+Epoch 7/30 - Loss: 0.0627 | Train Acc: 97.92% | Val Acc: 84.56% | (7.47s)
+  -> Breakdowns: CE=0.063, KD=3.672, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [161 122] | Val True Counts: [139 144]
+Epoch 8/30 - Loss: 0.1731 | Train Acc: 96.72% | Val Acc: 76.99% | (7.44s)
+  -> Breakdowns: CE=0.173, KD=4.103, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [199 84] | Val True Counts: [139 144]
+Epoch 9/30 - Loss: 0.0968 | Train Acc: 97.22% | Val Acc: 80.40% | (9.02s)
+  -> Breakdowns: CE=0.097, KD=3.970, Tversky=0.000, CAM_Align=0.067
+  -> Val Pred Counts: [101 182] | Val True Counts: [139 144]
+Epoch 10/30 - Loss: 0.0981 | Train Acc: 97.92% | Val Acc: 85.95% | (8.84s)
+  -> Breakdowns: CE=0.098, KD=4.986, Tversky=0.000, CAM_Align=0.068
+  -> Val Pred Counts: [149 134] | Val True Counts: [139 144]
+Epoch 11/30 - Loss: 0.0226 | Train Acc: 98.61% | Val Acc: 86.30% | (8.94s)
+  -> Breakdowns: CE=0.022, KD=4.486, Tversky=0.000, CAM_Align=0.065
+  -> Val Pred Counts: [142 141] | Val True Counts: [139 144]
+Epoch 12/30 - Loss: 0.0649 | Train Acc: 98.26% | Val Acc: 86.46% | (8.83s)
+  -> Breakdowns: CE=0.064, KD=4.366, Tversky=0.000, CAM_Align=0.064
+  -> Val Pred Counts: [142 141] | Val True Counts: [139 144]
+Epoch 13/30 - Loss: 0.0301 | Train Acc: 98.61% | Val Acc: 74.37% | (8.92s)
+  -> Breakdowns: CE=0.029, KD=6.082, Tversky=0.000, CAM_Align=0.067
+  -> Val Pred Counts: [205 78] | Val True Counts: [139 144]
+Epoch 14/30 - Loss: 0.0454 | Train Acc: 98.61% | Val Acc: 87.34% | (8.73s)
+  -> Breakdowns: CE=0.045, KD=5.385, Tversky=0.000, CAM_Align=0.068
+  -> Val Pred Counts: [139 144] | Val True Counts: [139 144]
+Epoch 15/30 - Loss: 0.0166 | Train Acc: 99.31% | Val Acc: 86.30% | (8.76s)
+  -> Breakdowns: CE=0.016, KD=5.196, Tversky=0.000, CAM_Align=0.065
+  -> Val Pred Counts: [122 161] | Val True Counts: [139 144]
+Epoch 16/30 - Loss: 0.1221 | Train Acc: 98.96% | Val Acc: 87.50% | (8.69s)
+  -> Breakdowns: CE=0.121, KD=5.946, Tversky=0.000, CAM_Align=0.066
+  -> Val Pred Counts: [119 164] | Val True Counts: [139 144]
+Epoch 17/30 - Loss: 0.0300 | Train Acc: 99.31% | Val Acc: 80.40% | (8.92s)
+  -> Breakdowns: CE=0.029, KD=5.722, Tversky=0.000, CAM_Align=0.065
+  -> Val Pred Counts: [181 102] | Val True Counts: [139 144]
+Epoch 18/30 - Loss: 0.0259 | Train Acc: 99.65% | Val Acc: 85.61% | (8.89s)
+  -> Breakdowns: CE=0.025, KD=5.246, Tversky=0.000, CAM_Align=0.063
+  -> Val Pred Counts: [132 151] | Val True Counts: [139 144]
+Epoch 19/30 - Loss: 0.0007 | Train Acc: 100.00% | Val Acc: 85.26% | (8.74s)
+  -> Breakdowns: CE=0.000, KD=5.118, Tversky=0.000, CAM_Align=0.061
+  -> Val Pred Counts: [139 144] | Val True Counts: [139 144]
+Epoch 20/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 85.26% | (8.89s)
+  -> Breakdowns: CE=0.000, KD=5.464, Tversky=0.000, CAM_Align=0.063
+  -> Val Pred Counts: [139 144] | Val True Counts: [139 144]
+Epoch 21/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 85.26% | (8.78s)
+  -> Breakdowns: CE=0.000, KD=5.509, Tversky=0.000, CAM_Align=0.063
+  -> Val Pred Counts: [139 144] | Val True Counts: [139 144]
+Epoch 22/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 85.61% | (8.88s)
+  -> Breakdowns: CE=0.000, KD=5.200, Tversky=0.000, CAM_Align=0.060
+  -> Val Pred Counts: [140 143] | Val True Counts: [139 144]
+Early stopping triggered on fold 1 at epoch 22 (best val acc 87.50%)
+
+--- Fold 2/2 ---
+Epoch 1/30 - Loss: 0.9707 | Train Acc: 54.23% | Val Acc: 48.61% | (7.68s)
+  -> Breakdowns: CE=0.971, KD=0.776, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [283 0] | Val True Counts: [140 143]
+Epoch 2/30 - Loss: 0.6005 | Train Acc: 69.67% | Val Acc: 82.86% | (7.48s)
+  -> Breakdowns: CE=0.600, KD=0.834, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [162 121] | Val True Counts: [140 143]
+Epoch 3/30 - Loss: 0.6085 | Train Acc: 77.49% | Val Acc: 82.35% | (7.41s)
+  -> Breakdowns: CE=0.608, KD=1.121, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [163 120] | Val True Counts: [140 143]
+Epoch 4/30 - Loss: 0.4407 | Train Acc: 82.99% | Val Acc: 85.95% | (7.48s)
+  -> Breakdowns: CE=0.441, KD=1.019, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [118 165] | Val True Counts: [140 143]
+Epoch 5/30 - Loss: 0.2628 | Train Acc: 90.81% | Val Acc: 86.81% | (7.44s)
+  -> Breakdowns: CE=0.263, KD=1.292, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [128 155] | Val True Counts: [140 143]
+Epoch 6/30 - Loss: 0.2936 | Train Acc: 90.12% | Val Acc: 86.65% | (7.48s)
+  -> Breakdowns: CE=0.294, KD=1.560, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [138 145] | Val True Counts: [140 143]
+Epoch 7/30 - Loss: 0.0701 | Train Acc: 97.57% | Val Acc: 77.49% | (7.41s)
+  -> Breakdowns: CE=0.070, KD=2.058, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [203 80] | Val True Counts: [140 143]
+Epoch 8/30 - Loss: 1.0901 | Train Acc: 83.87% | Val Acc: 82.86% | (7.49s)
+  -> Breakdowns: CE=1.090, KD=2.515, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [160 123] | Val True Counts: [140 143]
+Epoch 9/30 - Loss: 0.1037 | Train Acc: 96.91% | Val Acc: 78.12% | (8.69s)
+  -> Breakdowns: CE=0.104, KD=2.604, Tversky=0.000, CAM_Align=0.067
+  -> Val Pred Counts: [81 202] | Val True Counts: [140 143]
+Epoch 10/30 - Loss: 0.1004 | Train Acc: 96.53% | Val Acc: 84.03% | (8.76s)
+  -> Breakdowns: CE=0.100, KD=3.477, Tversky=0.000, CAM_Align=0.066
+  -> Val Pred Counts: [120 163] | Val True Counts: [140 143]
+Epoch 11/30 - Loss: 0.0076 | Train Acc: 99.31% | Val Acc: 86.99% | (8.85s)
+  -> Breakdowns: CE=0.007, KD=3.305, Tversky=0.000, CAM_Align=0.066
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 12/30 - Loss: 0.0073 | Train Acc: 99.65% | Val Acc: 82.86% | (8.83s)
+  -> Breakdowns: CE=0.007, KD=3.936, Tversky=0.000, CAM_Align=0.067
+  -> Val Pred Counts: [166 117] | Val True Counts: [140 143]
+Epoch 13/30 - Loss: 0.0008 | Train Acc: 100.00% | Val Acc: 86.14% | (8.92s)
+  -> Breakdowns: CE=0.000, KD=3.988, Tversky=0.000, CAM_Align=0.066
+  -> Val Pred Counts: [155 128] | Val True Counts: [140 143]
+Epoch 14/30 - Loss: 0.0007 | Train Acc: 100.00% | Val Acc: 84.41% | (8.76s)
+  -> Breakdowns: CE=0.000, KD=4.922, Tversky=0.000, CAM_Align=0.067
+  -> Val Pred Counts: [164 119] | Val True Counts: [140 143]
+Epoch 15/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 87.85% | (8.88s)
+  -> Breakdowns: CE=0.000, KD=5.369, Tversky=0.000, CAM_Align=0.063
+  -> Val Pred Counts: [141 142] | Val True Counts: [140 143]
+Epoch 16/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 86.99% | (8.76s)
+  -> Breakdowns: CE=0.000, KD=4.955, Tversky=0.000, CAM_Align=0.062
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 17/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 86.99% | (8.94s)
+  -> Breakdowns: CE=0.000, KD=5.523, Tversky=0.000, CAM_Align=0.060
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 18/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 86.99% | (8.81s)
+  -> Breakdowns: CE=0.000, KD=5.638, Tversky=0.000, CAM_Align=0.060
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 19/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 86.99% | (8.83s)
+  -> Breakdowns: CE=0.000, KD=5.325, Tversky=0.000, CAM_Align=0.060
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 20/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 86.99% | (8.86s)
+  -> Breakdowns: CE=0.000, KD=5.189, Tversky=0.000, CAM_Align=0.062
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 21/30 - Loss: 0.0006 | Train Acc: 100.00% | Val Acc: 86.99% | (8.72s)
+  -> Breakdowns: CE=0.000, KD=5.602, Tversky=0.000, CAM_Align=0.059
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Early stopping triggered on fold 2 at epoch 21 (best val acc 87.85%)
+
+=== RUNNING PILOT UNCERTAINTY OOD EVALUATION ===
+Resulting Diagnostics: Class Assignment ID = 2 | Confidence Entropy = 0.0789 | flagOOD = 0
+>> 
+
+
+CE + Tversky + weak GradCAM
+
+CONFIG.LOSS_WEIGHTS.kd = 0.0;
+CONFIG.LOSS_WEIGHTS.gradcam = 0.01;
+CONFIG.LOSS_WEIGHTS.tversky = 0.05;
+CONFIG.AUX_START_EPOCH = 8;
+CONFIG.AUX_RAMP_EPOCHS = 4;
+
+=== Loading Data from Structured Folders ===
+Found 566 images. Classes: normal, ptb
+Mapping masks...
+Creating 2-fold stratified splits...
+  Teacher sanity check — max prob: 0.947 (>0.6 = trained, ~0.5 = random)Initializing Student Network (VGG16 Logit Mode)...
+Using GPU: NVIDIA GeForce RTX 3070
+Using feature layer: relu5_3
+
+=== STARTING K-FOLD MULTI-TASK CV LOOP ===
+
+--- Fold 1/2 ---
+Epoch 1/30 - Loss: 1.0169 | Train Acc: 56.91% | Val Acc: 51.74% | (8.12s)
+  -> Breakdowns: CE=1.017, KD=0.869, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [0 283] | Val True Counts: [139 144]
+Epoch 2/30 - Loss: 0.8066 | Train Acc: 63.07% | Val Acc: 75.69% | (7.47s)
+  -> Breakdowns: CE=0.807, KD=0.876, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [85 198] | Val True Counts: [139 144]
+Epoch 3/30 - Loss: 0.7802 | Train Acc: 75.54% | Val Acc: 64.14% | (7.45s)
+  -> Breakdowns: CE=0.780, KD=1.140, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [236 47] | Val True Counts: [139 144]
+Epoch 4/30 - Loss: 0.4584 | Train Acc: 79.89% | Val Acc: 84.56% | (7.50s)
+  -> Breakdowns: CE=0.458, KD=0.964, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [135 148] | Val True Counts: [139 144]
+Epoch 5/30 - Loss: 0.2690 | Train Acc: 89.08% | Val Acc: 80.90% | (7.42s)
+  -> Breakdowns: CE=0.269, KD=1.585, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [102 181] | Val True Counts: [139 144]
+Epoch 6/30 - Loss: 0.2060 | Train Acc: 92.58% | Val Acc: 71.72% | (7.46s)
+  -> Breakdowns: CE=0.206, KD=1.714, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [68 215] | Val True Counts: [139 144]
+Epoch 7/30 - Loss: 0.0373 | Train Acc: 98.26% | Val Acc: 83.18% | (7.46s)
+  -> Breakdowns: CE=0.037, KD=2.136, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [131 152] | Val True Counts: [139 144]
+Epoch 8/30 - Loss: 0.1447 | Train Acc: 97.22% | Val Acc: 84.22% | (7.48s)
+  -> Breakdowns: CE=0.145, KD=4.017, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [122 161] | Val True Counts: [139 144]
+Epoch 9/30 - Loss: 0.0531 | Train Acc: 99.31% | Val Acc: 84.56% | (9.49s)
+  -> Breakdowns: CE=0.043, KD=4.011, Tversky=0.798, CAM_Align=0.073
+  -> Val Pred Counts: [145 138] | Val True Counts: [139 144]
+Epoch 10/30 - Loss: 0.0765 | Train Acc: 98.96% | Val Acc: 84.91% | (9.34s)
+  -> Breakdowns: CE=0.057, KD=4.629, Tversky=0.755, CAM_Align=0.079
+  -> Val Pred Counts: [164 119] | Val True Counts: [139 144]
+Epoch 11/30 - Loss: 0.0641 | Train Acc: 99.31% | Val Acc: 79.51% | (9.16s)
+  -> Breakdowns: CE=0.037, KD=4.827, Tversky=0.693, CAM_Align=0.088
+  -> Val Pred Counts: [92 191] | Val True Counts: [139 144]
+Epoch 12/30 - Loss: 0.1243 | Train Acc: 98.61% | Val Acc: 74.91% | (9.35s)
+  -> Breakdowns: CE=0.093, KD=6.214, Tversky=0.594, CAM_Align=0.115
+  -> Val Pred Counts: [207 76] | Val True Counts: [139 144]
+Epoch 13/30 - Loss: 0.1596 | Train Acc: 97.92% | Val Acc: 83.52% | (9.16s)
+  -> Breakdowns: CE=0.130, KD=5.135, Tversky=0.566, CAM_Align=0.123
+  -> Val Pred Counts: [174 109] | Val True Counts: [139 144]
+Epoch 14/30 - Loss: 0.1015 | Train Acc: 98.61% | Val Acc: 85.95% | (9.03s)
+  -> Breakdowns: CE=0.073, KD=5.369, Tversky=0.541, CAM_Align=0.134
+  -> Val Pred Counts: [135 148] | Val True Counts: [139 144]
+Epoch 15/30 - Loss: 0.0307 | Train Acc: 99.65% | Val Acc: 83.18% | (9.30s)
+  -> Breakdowns: CE=0.003, KD=5.748, Tversky=0.526, CAM_Align=0.139
+  -> Val Pred Counts: [115 168] | Val True Counts: [139 144]
+Epoch 16/30 - Loss: 0.1002 | Train Acc: 98.61% | Val Acc: 84.91% | (9.19s)
+  -> Breakdowns: CE=0.075, KD=5.826, Tversky=0.479, CAM_Align=0.163
+  -> Val Pred Counts: [166 117] | Val True Counts: [139 144]
+Epoch 17/30 - Loss: 0.1087 | Train Acc: 99.31% | Val Acc: 85.61% | (9.22s)
+  -> Breakdowns: CE=0.084, KD=6.626, Tversky=0.465, CAM_Align=0.178
+  -> Val Pred Counts: [130 153] | Val True Counts: [139 144]
+Epoch 18/30 - Loss: 0.0498 | Train Acc: 99.65% | Val Acc: 85.26% | (9.13s)
+  -> Breakdowns: CE=0.026, KD=6.498, Tversky=0.433, CAM_Align=0.186
+  -> Val Pred Counts: [141 142] | Val True Counts: [139 144]
+Epoch 19/30 - Loss: 0.0345 | Train Acc: 99.65% | Val Acc: 85.61% | (9.25s)
+  -> Breakdowns: CE=0.011, KD=6.696, Tversky=0.424, CAM_Align=0.193
+  -> Val Pred Counts: [138 145] | Val True Counts: [139 144]
+Epoch 20/30 - Loss: 0.0313 | Train Acc: 99.65% | Val Acc: 85.61% | (9.08s)
+  -> Breakdowns: CE=0.008, KD=6.317, Tversky=0.421, CAM_Align=0.195
+  -> Val Pred Counts: [150 133] | Val True Counts: [139 144]
+Early stopping triggered on fold 1 at epoch 20 (best val acc 85.95%)
+
+--- Fold 2/2 ---
+Epoch 1/30 - Loss: 0.7641 | Train Acc: 64.77% | Val Acc: 84.72% | (7.69s)
+  -> Breakdowns: CE=0.764, KD=0.823, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [138 145] | Val True Counts: [140 143]
+Epoch 2/30 - Loss: 0.5025 | Train Acc: 80.43% | Val Acc: 82.83% | (7.50s)
+  -> Breakdowns: CE=0.502, KD=1.048, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [105 178] | Val True Counts: [140 143]
+Epoch 3/30 - Loss: 0.2648 | Train Acc: 88.89% | Val Acc: 80.62% | (7.48s)
+  -> Breakdowns: CE=0.265, KD=1.199, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [184 99] | Val True Counts: [140 143]
+Epoch 4/30 - Loss: 0.4587 | Train Acc: 84.72% | Val Acc: 79.17% | (7.46s)
+  -> Breakdowns: CE=0.459, KD=1.494, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [82 201] | Val True Counts: [140 143]
+Epoch 5/30 - Loss: 0.8226 | Train Acc: 78.31% | Val Acc: 64.36% | (7.50s)
+  -> Breakdowns: CE=0.823, KD=1.491, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [239 44] | Val True Counts: [140 143]
+Epoch 6/30 - Loss: 0.3187 | Train Acc: 87.15% | Val Acc: 79.17% | (7.49s)
+  -> Breakdowns: CE=0.319, KD=1.393, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [88 195] | Val True Counts: [140 143]
+Epoch 7/30 - Loss: 0.1242 | Train Acc: 97.57% | Val Acc: 85.76% | (7.51s)
+  -> Breakdowns: CE=0.124, KD=1.920, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [117 166] | Val True Counts: [140 143]
+Epoch 8/30 - Loss: 0.1108 | Train Acc: 95.17% | Val Acc: 86.99% | (7.43s)
+  -> Breakdowns: CE=0.111, KD=2.659, Tversky=0.000, CAM_Align=0.000
+  -> Val Pred Counts: [153 130] | Val True Counts: [140 143]
+Epoch 9/30 - Loss: 0.0501 | Train Acc: 98.61% | Val Acc: 88.04% | (9.25s)
+  -> Breakdowns: CE=0.039, KD=3.434, Tversky=0.844, CAM_Align=0.075
+  -> Val Pred Counts: [126 157] | Val True Counts: [140 143]
+Epoch 10/30 - Loss: 0.0873 | Train Acc: 97.92% | Val Acc: 85.95% | (9.24s)
+  -> Breakdowns: CE=0.066, KD=3.841, Tversky=0.832, CAM_Align=0.076
+  -> Val Pred Counts: [156 127] | Val True Counts: [140 143]
+Epoch 11/30 - Loss: 0.0337 | Train Acc: 100.00% | Val Acc: 89.93% | (9.18s)
+  -> Breakdowns: CE=0.003, KD=4.077, Tversky=0.791, CAM_Align=0.079
+  -> Val Pred Counts: [133 150] | Val True Counts: [140 143]
+Epoch 12/30 - Loss: 0.1018 | Train Acc: 98.26% | Val Acc: 86.46% | (9.22s)
+  -> Breakdowns: CE=0.065, KD=4.884, Tversky=0.716, CAM_Align=0.091
+  -> Val Pred Counts: [123 160] | Val True Counts: [140 143]
+Epoch 13/30 - Loss: 0.0968 | Train Acc: 98.61% | Val Acc: 87.15% | (9.13s)
+  -> Breakdowns: CE=0.062, KD=4.773, Tversky=0.687, CAM_Align=0.099
+  -> Val Pred Counts: [115 168] | Val True Counts: [140 143]
+Epoch 14/30 - Loss: 0.0415 | Train Acc: 99.65% | Val Acc: 89.24% | (9.29s)
+  -> Breakdowns: CE=0.009, KD=5.288, Tversky=0.618, CAM_Align=0.117
+  -> Val Pred Counts: [147 136] | Val True Counts: [140 143]
+Epoch 15/30 - Loss: 0.3856 | Train Acc: 94.32% | Val Acc: 81.66% | (9.30s)
+  -> Breakdowns: CE=0.356, KD=5.112, Tversky=0.566, CAM_Align=0.136
+  -> Val Pred Counts: [183 100] | Val True Counts: [140 143]
+Epoch 16/30 - Loss: 0.2196 | Train Acc: 96.88% | Val Acc: 86.30% | (9.12s)
+  -> Breakdowns: CE=0.188, KD=5.125, Tversky=0.605, CAM_Align=0.126
+  -> Val Pred Counts: [127 156] | Val True Counts: [140 143]
+Epoch 17/30 - Loss: 0.1971 | Train Acc: 97.22% | Val Acc: 67.65% | (9.25s)
+  -> Breakdowns: CE=0.167, KD=5.753, Tversky=0.569, CAM_Align=0.135
+  -> Val Pred Counts: [228 55] | Val True Counts: [140 143]
+Early stopping triggered on fold 2 at epoch 17 (best val acc 89.93%)
+
+=== RUNNING PILOT UNCERTAINTY OOD EVALUATION ===
+Resulting Diagnostics: Class Assignment ID = -1 | Confidence Entropy = 0.6894 | flagOOD = 1
+>> 

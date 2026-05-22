@@ -1,0 +1,5 @@
+case_name,title,is_ood,use_dual_view,accuracy,precision,sensitivity,specificity,f1_score,auc,prob_mean,prob_median,pct_above_threshold,mean_uncertainty,std_uncertainty,high_uncertainty_pct,conservative_overrides
+roi_val,"ROI validation (ID)",0,0,0.507092,0.507092,1.000000,0.000000,0.672941,0.500000,0.990056,0.990056,100.000000,0.050156,0.000000,0.000000,0
+cxr_raw,"Full CXR raw",0,0,0.507067,0.507067,1.000000,0.000000,0.672919,0.500000,0.990057,0.990056,100.000000,0.050156,0.000000,0.000000,0
+cxr_roi,"Full CXR with ROI extraction",1,0,0.507067,0.507067,1.000000,0.000000,0.672919,0.500000,0.990057,0.990056,100.000000,0.050156,0.000000,0.000000,0
+cxr_dual,"Full CXR dual-view",1,1,0.507067,0.507067,1.000000,0.000000,0.672919,0.500000,0.990057,0.990056,100.000000,0.050156,0.000000,0.000000,0
